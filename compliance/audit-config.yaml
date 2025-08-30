@@ -1,0 +1,311 @@
+# Kubernetes Audit Policy
+apiVersion: audit.k8s.io/v1
+kind: Policy
+metadata:
+  name: audit-policy
+rules:
+  # Don't log read-only requests
+  - level: None
+    users: ["system:kube-proxy"]
+    verbs: ["watch"]
+    resources:
+    - group: ""
+      resources: ["endpoints", "services"]
+
+  # Don't log known noisy requests
+  - level: None
+    users: ["system:unsecured"]
+    namespaces: ["kube-system"]
+    verbs: ["get"]
+    resources:
+    - group: ""
+      resources: ["configmaps"]
+
+  # Log pod changes at Metadata level
+  - level: Metadata
+    omitStages:
+    - RequestReceived
+    resources:
+    - group: ""
+      resources: ["pods", "pods/status"]
+
+  # Log all other requests at Metadata level
+  - level: Metadata
+    omitStages:
+    - RequestReceived
+---
+# Compliance Dashboard
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: compliance-checks
+  namespace: compliance
+data:
+  checks.yaml: |
+    checks:
+      - name: "GDPR Compliance"
+        rules:
+          - id: "gdpr-1"
+            description: "Personal data must be encrypted at rest"
+            query: |
+              SELECT COUNT(*) as violations
+              FROM information_schema.columns
+              WHERE column_name IN ('email', 'phone', 'ssn', 'credit_card')
+              AND table_schema = 'public'
+              AND encryption_status != 'encrypted'
+
+          - id: "gdpr-2"
+            description: "Data retention policy must be enforced"
+            query: |
+              SELECT COUNT(*) as violations
+              FROM user_data
+              WHERE created_at < NOW() - INTERVAL '3 years'
+              AND deletion_requested = false
+
+      - name: "PCI DSS Compliance"
+        rules:
+          - id: "pci-1"
+            description: "Credit card data must be tokenized"
+            query: |
+              SELECT COUNT(*) as violations
+              FROM payments
+              WHERE card_number NOT LIKE 'tok_%'
+
+          - id: "pci-2"
+            description: "Access to payment data must be logged"
+            query: |
+              SELECT COUNT(*) as violations
+              FROM audit_logs
+              WHERE resource = 'payment_data'
+              AND timestamp > NOW() - INTERVAL '1 day'
+              GROUP BY user_id
+              HAVING COUNT(*) > 100
+
+      - name: "SOC 2 Compliance"
+        rules:
+          - id: "soc2-1"
+            description: "All API endpoints must require authentication"
+            script: |
+              kubectl get ingress -A -o json | \
+              jq '.items[].spec.rules[].http.paths[] |
+              select(.path | startswith("/api")) |
+              select(.backend.service.port.number == 3001)'
+
+          - id: "soc2-2"
+            description: "Backups must be tested monthly"
+            query: |
+              SELECT CASE
+                WHEN MAX(test_date) < NOW() - INTERVAL '30 days'
+                THEN 1 ELSE 0
+              END as violations
+              FROM backup_tests
+---
+# Audit Log Shipper
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: audit-log-shipper
+  namespace: compliance
+spec:
+  schedule: "*/15 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: shipper
+            image: skool/audit-shipper:latest
+            command:
+            - sh
+            - -c
+            - |
+              # Collect audit logs
+              kubectl logs -n kube-system -l component=kube-apiserver --since=15m > /tmp/audit.log
+
+              # Ship to compliance system
+              aws s3 cp /tmp/audit.log s3://skool-audit-logs/k8s/$(date +%Y/%m/%d/%H%M%S).log
+
+              # Send to SIEM
+              curl -X POST https://siem.skool.com/api/logs \
+                -H "Content-Type: application/json" \
+                -d @/tmp/audit.log
+          restartPolicy: OnFailure
+---
+# Compliance Report Generator
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: compliance-reporter
+  namespace: compliance
+data:
+  generate-report.sh: |
+    #!/bin/bash
+
+    # Generate compliance report
+    echo "Skool Platform Compliance Report"
+    echo "Generated: $(date)"
+    echo "================================"
+
+    # Check GDPR compliance
+    echo -e "\nGDPR Compliance:"
+    kubectl exec -it postgres-0 -n data -- psql -U skool -c "
+      SELECT
+        'Data Encryption' as check,
+        CASE WHEN COUNT(*) = 0 THEN 'PASS' ELSE 'FAIL' END as status
+      FROM pg_stat_ssl WHERE ssl = false;
+    "
+
+    # Check PCI compliance
+    echo -e "\nPCI DSS Compliance:"
+    kubectl get secret -A -o json | jq '.items[] | select(.data.card_number != null)' | wc -l
+
+    # Check SOC 2 compliance
+    echo -e "\nSOC 2 Compliance:"
+    kubectl get networkpolicy -A | grep -c "deny-all"
+
+    # Security scanning results
+    echo -e "\nSecurity Scanning:"
+    trivy image --severity CRITICAL,HIGH skool/api:latest
+
+    # Generate PDF report
+    wkhtmltopdf - compliance-report-$(date +%Y%m%d).pdf
+---
+# Compliance Monitoring Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: compliance-monitor
+  namespace: compliance
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: compliance-monitor
+  template:
+    metadata:
+      labels:
+        app: compliance-monitor
+    spec:
+      containers:
+      - name: monitor
+        image: skool/compliance-monitor:latest
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: database-secret
+              key: url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: redis-secret
+              key: url
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+---
+# Compliance Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: compliance-service
+  namespace: compliance
+---
+# Compliance Role Binding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: compliance-viewer
+subjects:
+- kind: ServiceAccount
+  name: compliance-service
+  namespace: compliance
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+---
+# Compliance Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: compliance
+  labels:
+    name: compliance
+---
+# Compliance Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: compliance-dashboard
+  namespace: compliance
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+  - hosts:
+    - compliance.skool.com
+    secretName: compliance-tls
+  rules:
+  - host: compliance.skool.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: compliance-monitor
+            port:
+              number: 8080
+---
+# Audit Log Retention Policy
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: audit-log-retention
+  namespace: compliance
+spec:
+  schedule: "0 2 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: retention
+            image: postgres:15
+            command:
+            - psql
+            - -c
+            - |
+              DELETE FROM audit_logs WHERE created_at < NOW() - INTERVAL '90 days';
+              VACUUM ANALYZE audit_logs;
+          env:
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: database-secret
+                key: password
+          - name: PGUSER
+            valueFrom:
+              secretKeyRef:
+                name: database-secret
+                key: username
+          - name: PGDATABASE
+            valueFrom:
+              secretKeyRef:
+                name: database-secret
+                key: database
+          - name: PGHOST
+            valueFrom:
+              secretKeyRef:
+                name: database-secret
+                key: host
+          restartPolicy: OnFailure

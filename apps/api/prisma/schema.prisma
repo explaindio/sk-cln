@@ -1,0 +1,1222 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model File {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  originalName String   @map("original_name")
+  mimeType     String   @map("mime_type")
+  size         Int
+  key          String   @unique
+  bucket       String
+  url          String
+  variants     String?  // JSON string of variant URLs
+  version      Int      @default(1)
+  isPublic     Boolean  @default(false) @map("is_public")
+  accessLevel  String   @default("private") @map("access_level")
+ compressed   Boolean  @default(false)
+  compressedSize Int?   @map("compressed_size")
+  cdnUrl       String?  @map("cdn_url")
+  tags         String[] @map("tags")
+  description  String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shares       FileShare[]
+  parentId     String?  @map("parent_id")
+  parent       File?    @relation("FileVersion", fields: [parentId], references: [id])
+  versions     File[]   @relation("FileVersion")
+
+  @@map("files")
+}
+
+model FileShare {
+  id        String   @id @default(uuid())
+  fileId    String   @map("file_id")
+  userId    String   @map("user_id")
+  sharedBy  String   @map("shared_by")
+  status    String   @default("active")
+  expiresAt DateTime? @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  file      File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+  sharer    User     @relation("FileSharer", fields: [sharedBy], references: [id])
+
+  @@map("file_shares")
+}
+
+model User {
+  id                       String                    @id @default(uuid())
+  email                    String                    @unique
+  username                 String                    @unique
+  passwordHash             String                    @map("password_hash")
+  firstName                String?                   @map("first_name")
+  lastName                 String?                   @map("last_name")
+  bio                      String?
+  avatarUrl                String?                   @map("avatar_url")
+  role                     UserRole                  @default(USER)
+  emailVerified            Boolean                   @default(false) @map("email_verified")
+  isActive                 Boolean                   @default(true) @map("is_active")
+  createdAt                DateTime                  @default(now()) @map("created_at")
+  updatedAt                DateTime                  @updatedAt @map("updated_at")
+  deletedAt                DateTime?                 @map("deleted_at")
+  lastActive               DateTime?                 @map("last_active")
+  resetToken               String?                   @map("reset_token")
+  resetTokenExpiry         DateTime?                 @map("reset_token_expiry")
+  emailVerificationToken   String?                   @map("email_verification_token")
+  emailVerificationExpiry  DateTime?                 @map("email_verification_expiry")
+  comments                 Comment[]
+  communities              CommunityMember[]
+  conversationParticipants ConversationParticipant[]
+  customer                 Customer?
+  enrollments              Enrollment[]
+  eventAttendances         EventAttendee[]
+  createdEvents            Event[]
+  sentMessages             Message[]
+  notificationPreferences  NotificationPreference?
+  notifications            Notification[]
+  points                   Points[]
+  posts                    Post[]
+  pushSubscriptions        PushSubscription[]
+  reactions                Reaction[]
+  searchQueries            SearchQuery[]
+  streaks                  Streak[]
+  userAchievements         UserAchievement[]
+  userChallenges           UserChallenge[]
+  userLevels               UserLevel?
+  preferences              UserPreferences?
+  userProgress             UserProgress[]
+  userRewards              UserReward[]
+  moderationLogs           ModerationLog[]     @relation("ModeratorActions")
+  createdContentFilters    ContentFilter[]
+  bannedUsers              BannedUser[]        @relation("BannedByModerator")
+  createdModerationRules   AutoModerationRule[]
+  bannedUserRecord         BannedUser?
+  auditLogs               AuditLog[]
+  files                    File[]
+  fileShares               FileShare[]      @relation("FileSharer")
+  sharedFiles              FileShare[]
+
+  // Feature flag relations
+  createdFeatureFlags      FeatureFlag[]    @relation("FeatureFlagCreated")
+  updatedFeatureFlags      FeatureFlag[]    @relation("FeatureFlagUpdated")
+  featureUsage             FeatureUsage[]
+  createdExperiments       ABExperiment[]   @relation("ExperimentCreated")
+
+  // Report relations
+  reports                  Report[]         @relation("ReporterReports")
+  assignedReports          Report[]         @relation("AssignedReports")
+  reviewedReports          Report[]         @relation("ReviewerReports")
+
+  @@map("users")
+}
+
+model UserPreferences {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  showLeaderboard    Boolean  @default(true) @map("show_leaderboard")
+  emailNotifications Boolean  @default(true) @map("email_notifications")
+  pushNotifications  Boolean  @default(true) @map("push_notifications")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+model Community {
+  id           String                 @id @default(uuid())
+  name         String
+  slug         String                 @unique
+  description  String?
+  logoUrl      String?                @map("logo_url")
+  coverUrl     String?                @map("cover_url")
+  isPublic     Boolean                @default(true) @map("is_public")
+  isPaid       Boolean                @default(false) @map("is_paid")
+  priceMonthly Float?                 @map("price_monthly")
+  priceYearly  Float?                 @map("price_yearly")
+  currency     String                 @default("USD")
+  ownerId      String                 @map("owner_id")
+  memberCount  Int                    @default(0) @map("member_count")
+  createdAt    DateTime               @default(now()) @map("created_at")
+  updatedAt    DateTime               @updatedAt @map("updated_at")
+  categories   Category[]
+  members      CommunityMember[]
+  courses      Course[]
+  events       Event[]
+  leaderboards Leaderboard[]
+  points       Points[]
+  posts        Post[]
+  competitions CommunityCompetition[] @relation("CommunityToCommunityCompetition")
+
+  @@map("communities")
+}
+
+model CommunityMember {
+  id          String    @id @default(uuid())
+  communityId String    @map("community_id")
+  userId      String    @map("user_id")
+  role        String    @default("member")
+  status      String    @default("active")
+  points      Int       @default(0)
+  level       Int       @default(1)
+  joinedAt    DateTime  @default(now()) @map("joined_at")
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([communityId, userId])
+  @@map("community_members")
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  communityId String    @map("community_id")
+  name        String
+  description String?
+  icon        String?
+  position    Int       @default(0)
+  isLocked    Boolean   @default(false) @map("is_locked")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  posts       Post[]
+
+  @@unique([communityId, name])
+  @@map("categories")
+}
+
+model Post {
+  id             String     @id @default(uuid())
+  communityId    String     @map("community_id")
+  categoryId     String     @map("category_id")
+  authorId       String     @map("author_id")
+  title          String
+  content        String
+  richTextContent String?    @map("rich_text_content")
+  attachments    String[]   @map("attachments")
+  isPinned       Boolean    @default(false) @map("is_pinned")
+  isLocked       Boolean    @default(false) @map("is_locked")
+  viewCount      Int        @default(0) @map("view_count")
+  likeCount      Int        @default(0) @map("like_count")
+  commentCount    Int        @default(0) @map("comment_count")
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+  deletedAt      DateTime?  @map("deleted_at")
+  comments       Comment[]
+  author         User       @relation(fields: [authorId], references: [id])
+  category       Category   @relation(fields: [categoryId], references: [id])
+  community      Community  @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  reactions      Reaction[]
+
+  @@index([communityId, createdAt])
+  @@map("posts")
+}
+
+model Comment {
+  id             String     @id @default(uuid())
+  postId         String     @map("post_id")
+  authorId       String     @map("author_id")
+  parentId       String?    @map("parent_id")
+  content        String
+  richTextContent String?    @map("rich_text_content")
+  attachments    String[]   @map("attachments")
+  likeCount      Int        @default(0) @map("like_count")
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+  deletedAt      DateTime?  @map("deleted_at")
+  author         User       @relation(fields: [authorId], references: [id])
+  parent         Comment?   @relation("CommentReplies", fields: [parentId], references: [id])
+  replies        Comment[]  @relation("CommentReplies")
+  post           Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  reactions      Reaction[]
+
+  @@map("comments")
+}
+
+model Reaction {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  postId    String?  @map("post_id")
+  commentId String?  @map("comment_id")
+  type      String   @default("like")
+  createdAt DateTime @default(now()) @map("created_at")
+  comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@unique([userId, commentId])
+  @@map("reactions")
+}
+
+model Course {
+  id          String         @id @default(uuid())
+  communityId String         @map("community_id")
+  title       String
+  description String?
+  thumbnail   String?
+  isPublished Boolean        @default(false) @map("is_published")
+  position    Int            @default(0)
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+  modules     CourseModule[]
+  community   Community      @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  enrollments Enrollment[]
+  progress    UserProgress[]
+
+  @@map("courses")
+}
+
+model CourseModule {
+  id          String   @id @default(uuid())
+  courseId    String   @map("course_id")
+  title       String
+  description String?
+  position    Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons     Lesson[]
+
+  @@map("course_modules")
+}
+
+model Lesson {
+  id          String         @id @default(uuid())
+  moduleId    String         @map("module_id")
+  title       String
+  contentType String         @map("content_type")
+  contentUrl  String?        @map("content_url")
+  contentText String?        @map("content_text")
+  duration    Int?
+  position    Int            @default(0)
+  isFree      Boolean        @default(false) @map("is_free")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  module      CourseModule   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  progress    UserProgress[]
+
+  @@map("lessons")
+}
+
+model UserProgress {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  courseId    String    @map("course_id")
+  lessonId    String?   @map("lesson_id")
+  progress    Float     @default(0)
+  status      String    @default("not_started")
+  startedAt   DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lesson      Lesson?   @relation(fields: [lessonId], references: [id])
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId, lessonId])
+  @@index([userId, courseId])
+  @@map("user_progress")
+}
+
+model Conversation {
+  id           String                    @id @default(uuid())
+  type         String                    @default("direct")
+  name         String?
+  createdBy    String                    @map("created_by")
+  createdAt    DateTime                  @default(now()) @map("created_at")
+  updatedAt    DateTime                  @updatedAt @map("updated_at")
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id             String       @id @default(uuid())
+  conversationId String       @map("conversation_id")
+  userId         String       @map("user_id")
+  joinedAt       DateTime     @default(now()) @map("joined_at")
+  lastReadAt     DateTime?    @map("last_read_at")
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String       @map("conversation_id")
+  senderId       String       @map("sender_id")
+  content        String
+  messageType    String       @default("text") @map("message_type")
+  attachments    String[]     @map("attachments")
+  isEdited       Boolean      @default(false) @map("is_edited")
+  isPinned       Boolean      @default(false) @map("is_pinned")
+  reactions      Json?
+  createdAt      DateTime     @default(now()) @map("created_at")
+  editedAt       DateTime?    @map("edited_at")
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation(fields: [senderId], references: [id])
+
+  @@map("messages")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String           @map("user_id")
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?
+  actionUrl String?
+  imageUrl  String?
+  read      Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now()) @map("created_at")
+  clickedAt DateTime?
+  isClicked Boolean          @default(false)
+  isOpened  Boolean          @default(false)
+  openedAt  DateTime?
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model Event {
+  id            String          @id @default(uuid())
+  communityId   String          @map("community_id")
+  creatorId     String          @map("creator_id")
+  title         String
+  description   String?
+  location      String?
+  meetingUrl    String?         @map("meeting_url")
+  startsAt      DateTime        @map("starts_at")
+  endsAt        DateTime        @map("ends_at")
+  maxAttendees  Int?            @map("max_attendees")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  remindersSent Boolean         @default(false) @map("reminders_sent")
+  attendees     EventAttendee[]
+  community     Community       @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  creator       User            @relation(fields: [creatorId], references: [id])
+
+  @@map("events")
+}
+
+model EventAttendee {
+  id        String   @id @default(uuid())
+  eventId   String   @map("event_id")
+  userId    String   @map("user_id")
+  status    String   @default("going")
+  createdAt DateTime @default(now()) @map("created_at")
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@map("event_attendees")
+}
+
+model Points {
+  id          String     @id @default(cuid())
+  userId      String
+  communityId String?
+  amount      Int
+  type        PointType
+  reason      String
+  metadata    Json?
+  createdAt   DateTime   @default(now())
+  community   Community? @relation(fields: [communityId], references: [id])
+  user        User       @relation(fields: [userId], references: [id])
+
+  @@index([userId, communityId])
+  @@index([createdAt])
+  @@map("points")
+}
+
+model Achievement {
+  id               String            @id @default(cuid())
+  name             String            @unique
+  description      String
+  icon             String
+  category         String
+  points           Int
+  criteria         Json
+  maxLevel         Int               @default(1)
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  userAchievements UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  achievementId String
+  level         Int         @default(1)
+  progress      Int         @default(0)
+  unlockedAt    DateTime?
+  notified      Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  user          User        @relation(fields: [userId], references: [id])
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@map("user_achievements")
+}
+
+model Leaderboard {
+  id          String            @id @default(cuid())
+  communityId String?
+  period      LeaderboardPeriod
+  startDate   DateTime
+  endDate     DateTime
+  snapshot    Json
+  createdAt   DateTime          @default(now())
+  community   Community?        @relation(fields: [communityId], references: [id])
+
+  @@index([communityId, period])
+  @@index([startDate, endDate])
+  @@map("leaderboards")
+}
+
+model UserLevel {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  level       Int      @default(1)
+  experience  Int      @default(0)
+  nextLevelXp Int      @default(100)
+  title       String?
+  badge       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("user_levels")
+}
+
+model Streak {
+  id           String     @id @default(cuid())
+  userId       String
+  type         StreakType
+  currentDays  Int        @default(0)
+  bestDays     Int        @default(0)
+  lastActivity DateTime?
+  startDate    DateTime   @default(now())
+  endDate      DateTime?
+  user         User       @relation(fields: [userId], references: [id])
+
+  @@unique([userId, type])
+  @@index([userId])
+  @@map("streaks")
+}
+
+model Challenge {
+  id             String          @id @default(cuid())
+  name           String
+  description    String
+  type           ChallengeType
+  criteria       Json
+  points         Int
+  badge          String?
+  isActive       Boolean         @default(true)
+  startDate      DateTime
+  endDate        DateTime
+  createdAt      DateTime        @default(now())
+  userChallenges UserChallenge[]
+
+  @@map("challenges")
+}
+
+model UserChallenge {
+  id          String    @id @default(cuid())
+  userId      String
+  challengeId String
+  progress    Int       @default(0)
+  completedAt DateTime?
+  challenge   Challenge @relation(fields: [challengeId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@unique([userId, challengeId])
+  @@map("user_challenges")
+}
+
+model CommunityCompetition {
+  id           String      @id @default(cuid())
+  name         String
+  description  String?
+  startDate    DateTime
+  endDate      DateTime
+  metric       String
+  isActive     Boolean     @default(true)
+  winnerId     String?
+  participants Community[] @relation("CommunityToCommunityCompetition")
+
+  @@map("community_competitions")
+}
+
+model Customer {
+  id               String          @id @default(cuid())
+  userId           String          @unique
+  stripeCustomerId String          @unique
+  email            String
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paymentMethods   PaymentMethod[]
+  payments         Payment[]
+  subscriptions    Subscription[]
+
+  @@map("customers")
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  customerId           String
+  stripeSubscriptionId String             @unique
+  stripePriceId        String
+  status               SubscriptionStatus
+  tier                 SubscriptionTier
+  interval             BillingInterval
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean            @default(false)
+  canceledAt           DateTime?
+  trialStart           DateTime?
+  trialEnd             DateTime?
+  metadata             Json?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  customer             Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([stripeSubscriptionId])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+model PaymentMethod {
+  id                    String   @id @default(cuid())
+  customerId            String
+  stripePaymentMethodId String   @unique
+  type                  String
+  card                  Json?
+  isDefault             Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  customer              Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([stripePaymentMethodId])
+  @@map("payment_methods")
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  customerId      String
+  stripePaymentId String        @unique
+  amount          Int
+  currency        String        @default("usd")
+  status          PaymentStatus
+  description     String?
+  paymentMethodId String?
+  courseId        String?
+  metadata        Json?
+  failureReason   String?
+  refunded        Boolean       @default(false)
+  refundAmount    Int?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  enrollment      Enrollment?
+  customer        Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([stripePaymentId])
+  @@index([status])
+  @@map("payments")
+}
+
+model Enrollment {
+  id         String   @id @default(cuid())
+  userId     String
+  courseId   String
+  paymentId  String?  @unique
+  enrolledAt DateTime @default(now())
+  progress   Float    @default(0)
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  payment    Payment? @relation(fields: [paymentId], references: [id])
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@map("enrollments")
+}
+
+model Reward {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  description String?
+  type        RewardType
+  cost        Int
+  stock       Int?
+  data        Json?
+  isActive    Boolean      @default(true) @map("is_active")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  userRewards UserReward[]
+
+  @@map("rewards")
+}
+
+model UserReward {
+  id        String   @id @default(cuid())
+  userId    String
+  rewardId  String
+  createdAt DateTime @default(now())
+  reward    Reward   @relation(fields: [rewardId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, rewardId])
+  @@map("user_rewards")
+}
+
+model NotificationPreference {
+  id                String          @id @default(cuid())
+  userId            String          @unique @map("user_id")
+  emailEnabled      Boolean         @default(true) @map("email_enabled")
+  emailDigest       DigestFrequency @default(DAILY) @map("email_digest")
+  emailPosts        Boolean         @default(true) @map("email_posts")
+  emailComments     Boolean         @default(true) @map("email_comments")
+  emailMessages     Boolean         @default(true) @map("email_messages")
+  emailEvents       Boolean         @default(true) @map("email_events")
+  emailCourses      Boolean         @default(true) @map("email_courses")
+  pushEnabled       Boolean         @default(true) @map("push_enabled")
+  pushPosts         Boolean         @default(true) @map("push_posts")
+  pushComments      Boolean         @default(true) @map("push_comments")
+  pushMessages      Boolean         @default(true) @map("push_messages")
+  pushEvents        Boolean         @default(true) @map("push_events")
+  pushCourses       Boolean         @default(true) @map("push_courses")
+  inAppEnabled      Boolean         @default(true) @map("in_app_enabled")
+  inAppSound        Boolean         @default(true) @map("in_app_sound")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  dndEnabled        Boolean         @default(false) @map("dnd_enabled")
+  dndEnd            String?         @map("dnd_end")
+  dndStart          String?         @map("dnd_start")
+  notificationSound String          @default("default.mp3") @map("notification_sound")
+  user              User            @relation(fields: [userId], references: [id])
+
+  @@map("notification_preferences")
+}
+
+model EmailQueue {
+  id        String      @id @default(cuid())
+  to        String
+  subject   String
+  html      String
+  text      String
+  status    EmailStatus @default(PENDING)
+  attempts  Int         @default(0)
+  error     String?
+  sentAt    DateTime?
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("email_queue")
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  endpoint  String   @unique
+  keys      Json
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
+model SearchQuery {
+  id                String   @id @default(cuid())
+  userId            String?  @map("user_id")
+  query             String
+  filters           Json?
+  page              Int
+  resultsCount      Int      @map("results_count")
+  took              Int
+  clickedResultId   String?  @map("clicked_result_id")
+  clickedResultType String?  @map("clicked_result_type")
+  createdAt         DateTime @default(now()) @map("created_at")
+  user              User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("search_queries")
+}
+
+// Moderation Models
+model ModerationLog {
+  id            String          @id @default(cuid())
+  action        ModerationAction
+  targetType    String          // 'post', 'comment', 'user', 'message'
+  targetId      String
+  moderatorId   String
+  moderator     User            @relation("ModeratorActions", fields: [moderatorId], references: [id])
+  reason        String?
+  notes         String?
+  metadata      Json?
+  createdAt     DateTime        @default(now())
+
+  @@index([targetType, targetId])
+  @@index([moderatorId])
+  @@index([action])
+  @@map("moderation_logs")
+}
+
+model ContentFilter {
+  id            String         @id @default(cuid())
+  name          String
+  type          FilterType
+  pattern       String         // Regex pattern or keyword list
+  severity      FilterSeverity
+  action        FilterAction
+  isActive      Boolean        @default(true)
+  createdBy     String
+  creator       User           @relation(fields: [createdBy], references: [id])
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([type])
+  @@index([isActive])
+  @@map("content_filters")
+}
+
+model BannedUser {
+  id            String        @id @default(cuid())
+  userId        String        @unique
+  user          User          @relation(fields: [userId], references: [id])
+  reason        String
+  bannedBy      String
+  banner        User          @relation("BannedByModerator", fields: [bannedBy], references: [id])
+  bannedUntil   DateTime?
+  appealStatus  AppealStatus  @default(NONE)
+  appealNotes   String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([bannedUntil])
+  @@index([appealStatus])
+  @@map("banned_users")
+}
+
+model AutoModerationRule {
+  id            String         @id @default(cuid())
+  name          String
+  description   String?
+  conditions    Json           // Array of conditions
+  actions       Json           // Array of actions to take
+  priority      Int            @default(0)
+  isActive      Boolean        @default(true)
+  triggerCount  Int            @default(0)
+  createdBy     String
+  creator       User           @relation(fields: [createdBy], references: [id])
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([isActive])
+  @@index([priority])
+  @@map("auto_moderation_rules")
+}
+
+// Feature Flags Models
+model FeatureFlag {
+  id            String         @id @default(uuid())
+  name          String         @unique
+  key           String         @unique @map("key")
+  description   String?
+  value         Json           // Can be string, boolean, number, or object
+  defaultValue  Json           // Fallback value when flag is disabled
+  isActive      Boolean        @default(true) @map("is_active")
+  isArchived    Boolean        @default(false) @map("is_archived")
+  rolloutPercentage Float       @default(100) @map("rollout_percentage") // 0-100
+  userIds       String[]       @map("user_ids") // Direct user targeting
+  conditions    Json?          // Advanced targeting rules
+  createdById   String?        @map("created_by_id")
+  updatedById   String?        @map("updated_by_id")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  archivedAt    DateTime?      @map("archived_at")
+
+  // Relations
+  createdBy     User?          @relation("FeatureFlagCreated", fields: [createdById], references: [id])
+  updatedBy     User?          @relation("FeatureFlagUpdated", fields: [updatedById], references: [id])
+  segments      FeatureSegment[]
+  usages        FeatureUsage[]
+  experiments   ABExperiment[]
+
+  @@map("feature_flags")
+}
+
+model ABExperiment {
+  id            String              @id @default(uuid())
+  name          String              @unique
+  description   String?
+  featureFlagId String              @map("feature_flag_id")
+  isActive      Boolean             @default(true) @map("is_active")
+  status        ExperimentStatus    @default(DRAFT)
+  variants      Json                // Array of experiment variants
+  targetAudience String?            @map("target_audience")
+  startDate     DateTime?           @map("start_date")
+  endDate       DateTime?           @map("end_date")
+  winnerVariant String?             @map("winner_variant")
+  metrics       Json?               // Primary and secondary metrics
+  createdById   String              @map("created_by_id")
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt @map("updated_at")
+
+  // Relations
+  featureFlag   FeatureFlag         @relation(fields: [featureFlagId], references: [id], onDelete: Cascade)
+  createdBy     User                @relation("ExperimentCreated", fields: [createdById], references: [id])
+  usages        FeatureUsage[]
+
+  @@index([featureFlagId])
+  @@index([status])
+  @@index([startDate, endDate])
+  @@map("ab_experiments")
+}
+
+model FeatureUsage {
+  id              String       @id @default(uuid())
+  userId          String       @map("user_id")
+  featureFlagId   String?      @map("feature_flag_id")
+  experimentId    String?      @map("experiment_id")
+  variant         String?      // Which variant was served
+  action          String       // What action was performed
+  metadata        Json?        // Additional context data
+  sessionId       String?      @map("session_id")
+  userAgent       String?      @map("user_agent")
+  ipAddress       String?      @map("ip_address")
+  timestamp       DateTime     @default(now())
+
+  // Relations
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  featureFlag     FeatureFlag? @relation(fields: [featureFlagId], references: [id], onDelete: Cascade)
+  experiment      ABExperiment? @relation(fields: [experimentId], references: [id])
+
+  @@index([userId, timestamp])
+  @@index([featureFlagId, timestamp])
+  @@index([experimentId])
+  @@index([action, timestamp])
+  @@map("feature_usage")
+}
+
+model FeatureSegment {
+  id            String     @id @default(uuid())
+  featureFlagId String     @map("feature_flag_id")
+  name          String
+  type          SegmentType
+  conditions    Json       // Segment matching rules
+  isActive      Boolean    @default(true) @map("is_active")
+  priority      Int        @default(0)
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  featureFlag   FeatureFlag @relation(fields: [featureFlagId], references: [id], onDelete: Cascade)
+
+  @@index([featureFlagId])
+  @@index([type])
+  @@map("feature_segments")
+}
+
+
+enum PointType {
+  POST_CREATED
+  POST_LIKED
+  COMMENT_CREATED
+  COURSE_COMPLETED
+  LESSON_COMPLETED
+  QUIZ_PASSED
+  EVENT_ATTENDED
+  DAILY_LOGIN
+  STREAK_BONUS
+  ACHIEVEMENT_UNLOCKED
+  REFERRAL
+  CHALLENGE_COMPLETED
+  OTHER
+}
+
+enum LeaderboardPeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
+  ALL_TIME
+}
+
+enum StreakType {
+  DAILY_LOGIN
+  DAILY_POST
+  COURSE_PROGRESS
+  CONTRIBUTION
+}
+
+enum ChallengeType {
+  DAILY
+  WEEKLY
+}
+
+enum RewardType {
+  PROFILE_BADGE
+  DISCOUNT_CODE
+  EXCLUSIVE_CONTENT
+  COURSE_ACCESS
+}
+
+enum NotificationType {
+  POST_LIKED
+  POST_COMMENTED
+  POST_MENTIONED
+  NEW_MESSAGE
+  MESSAGE_REQUEST
+  COMMUNITY_INVITE
+  COMMUNITY_JOIN_REQUEST
+  MEMBER_JOINED
+  COURSE_ENROLLED
+  LESSON_AVAILABLE
+  ASSIGNMENT_GRADED
+  CERTIFICATE_EARNED
+  EVENT_REMINDER
+  EVENT_UPDATED
+  EVENT_CANCELLED
+  ACHIEVEMENT_UNLOCKED
+  LEVEL_UP
+  POINTS_EARNED
+  LEADERBOARD_RANK
+  SYSTEM_ANNOUNCEMENT
+  ACCOUNT_UPDATE
+  SECURITY_ALERT
+}
+
+enum DigestFrequency {
+  NEVER
+  IMMEDIATELY
+  DAILY
+  WEEKLY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  PAST_DUE
+  TRIALING
+  UNPAID
+  PAUSED
+}
+
+enum SubscriptionTier {
+  FREE
+  BASIC
+  PRO
+}
+
+enum BillingInterval {
+  DAY
+  WEEK
+  MONTH
+  YEAR
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum EmailStatus {
+  PENDING
+  SENDING
+  SENT
+  FAILED
+}
+
+enum ModerationAction {
+  APPROVE
+  REJECT
+  DELETE
+  EDIT
+  WARN
+  MUTE
+  BAN
+  UNBAN
+  FLAG
+  REVIEW
+}
+
+enum FilterType {
+  KEYWORD
+  REGEX
+  AI_BASED
+  IMAGE
+  LINK
+}
+
+enum FilterSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum FilterAction {
+  FLAG
+  BLOCK
+  SHADOW_BAN
+  REQUIRE_REVIEW
+  AUTO_DELETE
+}
+
+// Compliance and Auditing Models
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  action      String
+  target      String?
+  targetId    String?
+  details     Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model ComplianceCheck {
+  id          String           @id @default(cuid())
+  name        String
+  type        ComplianceType
+  status      ComplianceStatus
+  result      Json?
+  checkedAt   DateTime         @default(now())
+  nextCheck   DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([type])
+  @@index([status])
+  @@map("compliance_checks")
+}
+
+enum AppealStatus {
+  NONE
+  PENDING
+  APPROVED
+  DENIED
+}
+
+enum ComplianceType {
+  GDPR
+  PCI_DSS
+  SOC_2
+  ISO_27001
+  HIPAA
+}
+
+enum ComplianceStatus {
+  PASS
+  FAIL
+  WARNING
+  PENDING
+}
+
+enum ExperimentStatus {
+  DRAFT
+  RUNNING
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum SegmentType {
+  USER_BASED
+  ATTRIBUTE_BASED
+  BEHAVIOR_BASED
+  RANDOM
+}
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWING
+  RESOLVED
+  DISMISSED
+  ESCALATED
+}
+
+enum ReportReason {
+  SPAM
+  HARASSMENT
+  INAPPROPRIATE_CONTENT
+  VIOLENCE
+  HATE_SPEECH
+  THREATS
+  MISINFORMATION
+  COPYRIGHT_INFRINGEMENT
+  OTHER
+}
+
+model Report {
+  id            String      @id @default(cuid())
+  reporterId    String      @map("reporter_id")
+  targetType    String      // 'post', 'comment', 'user', 'message'
+  targetId      String
+  reason        ReportReason
+  description   String?
+  status        ReportStatus @default(PENDING)
+  assignedTo    String?     @map("assigned_to") // moderator ID
+  reviewedAt    DateTime?   @map("reviewed_at")
+  reviewedById  String?     @map("reviewed_by_id")
+  resolution    String?     // 'resolved', 'dismissed', etc.
+  action        Json?       // action taken details
+  notes         String?     // moderator notes
+
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  reporter      User        @relation("ReporterReports", fields: [reporterId], references: [id])
+  assigned      User?       @relation("AssignedReports", fields: [assignedTo], references: [id])
+  reviewer      User?       @relation("ReviewerReports", fields: [reviewedById], references: [id])
+
+  @@index([reporterId])
+  @@index([targetType, targetId])
+  @@index([status])
+  @@index([assignedTo])
+  @@index([createdAt])
+  @@map("reports")
+}
+

@@ -1,0 +1,349 @@
+
+> skool-clone@1.0.0 dev /mnt/c/Users/andre/Documents/sk-cln/skool-clone
+> pnpm --parallel --filter './apps/*' --filter './packages/*' dev
+
+Scope: 4 of 5 workspace projects
+packages/shared dev$ tsc --watch
+apps/web dev$ next dev -p 3000
+apps/api dev$ nodemon
+packages/shared dev: [2J[3J[H2:04:17 PM - Starting compilation in watch mode...
+apps/api dev: [33m[nodemon] 3.1.10[39m
+apps/api dev: [33m[nodemon] to restart at any time, enter `rs`[39m
+apps/api dev: [33m[nodemon] watching path(s): src/**/*[39m
+apps/api dev: [33m[nodemon] watching extensions: ts,js[39m
+apps/api dev: [32m[nodemon] starting `ts-node -r tsconfig-paths/register ./src/index.ts`[39m
+packages/shared dev: 2:04:21 PM - Found 0 errors. Watching for file changes.
+apps/web dev:  ⨯ Failed to start server
+apps/web dev: Error: listen EADDRINUSE: address already in use :::3000
+apps/web dev:     at <unknown> (Error: listen EADDRINUSE: address already in use :::3000)
+apps/web dev:     at new Promise (<anonymous>) {
+apps/web dev:   code: 'EADDRINUSE',
+apps/web dev:   errno: -98,
+apps/web dev:   syscall: 'listen',
+apps/web dev:   address: '::',
+apps/web dev:   port: 3000
+apps/web dev: }
+apps/web dev: [?25h
+apps/web dev: Done
+apps/api dev: Error: listen EADDRINUSE: address already in use :::4000
+apps/api dev:     at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+apps/api dev:     at listenInCluster (node:net:1997:12)
+apps/api dev:     at Server.listen (node:net:2102:7)
+apps/api dev:     at app.listen (/mnt/c/Users/andre/Documents/sk-cln/skool-clone/node_modules/.pnpm/express@4.21.2/node_modules/express/lib/application.js:635:24)
+apps/api dev:     at Object.<anonymous> (/mnt/c/Users/andre/Documents/sk-cln/skool-clone/apps/api/src/index.ts:48:5)
+apps/api dev:     at Module._compile (node:internal/modules/cjs/loader:1738:14)
+apps/api dev:     at Module.m._compile (/mnt/c/Users/andre/Documents/sk-cln/skool-clone/node_modules/.pnpm/ts-node@10.9.2_@types+node@20.19.11_typescript@5.9.2/node_modules/ts-node/src/index.ts:1618:23)
+apps/api dev:     at node:internal/modules/cjs/loader:1871:10
+apps/api dev:     at Object.require.extensions.<computed> [as .ts] (/mnt/c/Users/andre/Documents/sk-cln/skool-clone/node_modules/.pnpm/ts-node@10.9.2_@types+node@20.19.11_typescript@5.9.2/node_modules/ts-node/src/index.ts:1621:12)
+apps/api dev:     at Module.load (node:internal/modules/cjs/loader:1470:32) {
+apps/api dev:   code: 'EADDRINUSE',
+apps/api dev:   errno: -98,
+apps/api dev:   syscall: 'listen',
+apps/api dev:   address: '::',
+apps/api dev:   port: 4000
+apps/api dev: }
+apps/api dev: [31m[nodemon] app crashed - waiting for file changes before starting...[39m
+
+> skool-clone@1.0.0 dev /mnt/c/Users/andre/Documents/sk-cln/skool-clone
+> pnpm --parallel --filter './apps/*' --filter './packages/*' dev
+
+Scope: 4 of 5 workspace projects
+apps/api dev$ nodemon
+packages/shared dev$ tsc --watch
+apps/web dev$ next dev -p 3000
+packages/shared dev: [2J[3J[H6:39:18 PM - Starting compilation in watch mode...
+apps/api dev: [33m[nodemon] 3.1.10[39m
+apps/api dev: [33m[nodemon] to restart at any time, enter `rs`[39m
+apps/api dev: [33m[nodemon] watching path(s): src/**/*[39m
+apps/api dev: [33m[nodemon] watching extensions: ts,js[39m
+apps/api dev: [32m[nodemon] starting `ts-node -r tsconfig-paths/register ./src/index.ts`[39m
+packages/shared dev: 6:39:22 PM - Found 0 errors. Watching for file changes.
+apps/web dev:  ⨯ Failed to start server
+apps/web dev: Error: listen EADDRINUSE: address already in use :::3000
+apps/web dev:     at <unknown> (Error: listen EADDRINUSE: address already in use :::3000)
+apps/web dev:     at new Promise (<anonymous>) {
+apps/web dev:   code: 'EADDRINUSE',
+apps/web dev:   errno: -98,
+apps/web dev:   syscall: 'listen',
+apps/web dev:   address: '::',
+apps/web dev:   port: 3000
+apps/web dev: }
+apps/web dev: [?25h
+apps/web dev: Done
+apps/api dev: 🚀 API server running on http://localhost:4000
+apps/api dev: Killed
+apps/api dev: [31m[nodemon] app crashed - waiting for file changes before starting...[39m
+
+> skool-clone@1.0.0 dev /mnt/c/Users/andre/Documents/sk-cln/skool-clone
+> pnpm --parallel --filter './apps/*' --filter './packages/*' dev
+
+Scope: 4 of 5 workspace projects
+packages/shared dev$ tsc --watch
+apps/api dev$ nodemon
+apps/web dev$ next dev -p 3000
+packages/shared dev: [2J[3J[H9:01:02 PM - Starting compilation in watch mode...
+apps/api dev: [33m[nodemon] 3.1.10[39m
+apps/api dev: [33m[nodemon] to restart at any time, enter `rs`[39m
+apps/api dev: [33m[nodemon] watching path(s): src/**/*[39m
+apps/api dev: [33m[nodemon] watching extensions: ts,js[39m
+apps/api dev: [32m[nodemon] starting `ts-node -r tsconfig-paths/register ./src/index.ts`[39m
+packages/shared dev: 9:01:07 PM - Found 0 errors. Watching for file changes.
+apps/web dev:  ⨯ Failed to start server
+apps/web dev: Error: listen EADDRINUSE: address already in use :::3000
+apps/web dev:     at <unknown> (Error: listen EADDRINUSE: address already in use :::3000)
+apps/web dev:     at new Promise (<anonymous>) {
+apps/web dev:   code: 'EADDRINUSE',
+apps/web dev:   errno: -98,
+apps/web dev:   syscall: 'listen',
+apps/web dev:   address: '::',
+apps/web dev:   port: 3000
+apps/web dev: }
+apps/web dev: [?25h
+apps/web dev: Done
+apps/api dev: 🚀 API server running on http://localhost:4000
+ ELIFECYCLE  Command failed.
+ ELIFECYCLE  Command failed.
+ ELIFECYCLE  Command failed.
+
+> skool-clone@1.0.0 dev /mnt/c/Users/andre/Documents/sk-cln/skool-clone
+> pnpm --parallel --filter './apps/*' --filter './packages/*' dev
+
+Scope: 4 of 5 workspace projects
+packages/shared dev$ tsc --watch
+apps/api dev$ nodemon
+apps/web dev$ next dev -p 3000
+packages/shared dev: [2J[3J[H9:52:02 PM - Starting compilation in watch mode...
+apps/api dev: [33m[nodemon] 3.1.10[39m
+apps/api dev: [33m[nodemon] to restart at any time, enter `rs`[39m
+apps/api dev: [33m[nodemon] watching path(s): src/**/*[39m
+apps/api dev: [33m[nodemon] watching extensions: ts,js[39m
+apps/api dev: [32m[nodemon] starting `ts-node -r tsconfig-paths/register ./src/index.ts`[39m
+packages/shared dev: 9:52:06 PM - Found 0 errors. Watching for file changes.
+apps/web dev:  ⨯ Failed to start server
+apps/web dev: Error: listen EADDRINUSE: address already in use :::3000
+apps/web dev:     at <unknown> (Error: listen EADDRINUSE: address already in use :::3000)
+apps/web dev:     at new Promise (<anonymous>) {
+apps/web dev:   code: 'EADDRINUSE',
+apps/web dev:   errno: -98,
+apps/web dev:   syscall: 'listen',
+apps/web dev:   address: '::',
+apps/web dev:   port: 3000
+apps/web dev: }
+apps/web dev: [?25h
+apps/web dev: Done
+apps/api dev: Error: listen EADDRINUSE: address already in use :::4000
+apps/api dev:     at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+apps/api dev:     at listenInCluster (node:net:1997:12)
+apps/api dev:     at Server.listen (node:net:2102:7)
+apps/api dev:     at app.listen (/mnt/c/Users/andre/Documents/sk-cln/skool-clone/node_modules/.pnpm/express@4.21.2/node_modules/express/lib/application.js:635:24)
+apps/api dev:     at Object.<anonymous> (/mnt/c/Users/andre/Documents/sk-cln/skool-clone/apps/api/src/index.ts:48:5)
+apps/api dev:     at Module._compile (node:internal/modules/cjs/loader:1738:14)
+apps/api dev:     at Module.m._compile (/mnt/c/Users/andre/Documents/sk-cln/skool-clone/node_modules/.pnpm/ts-node@10.9.2_@types+node@20.19.11_typescript@5.9.2/node_modules/ts-node/src/index.ts:1618:23)
+apps/api dev:     at node:internal/modules/cjs/loader:1871:10
+apps/api dev:     at Object.require.extensions.<computed> [as .ts] (/mnt/c/Users/andre/Documents/sk-cln/skool-clone/node_modules/.pnpm/ts-node@10.9.2_@types+node@20.19.11_typescript@5.9.2/node_modules/ts-node/src/index.ts:1621:12)
+apps/api dev:     at Module.load (node:internal/modules/cjs/loader:1470:32) {
+apps/api dev:   code: 'EADDRINUSE',
+apps/api dev:   errno: -98,
+apps/api dev:   syscall: 'listen',
+apps/api dev:   address: '::',
+apps/api dev:   port: 4000
+apps/api dev: }
+apps/api dev: [31m[nodemon] app crashed - waiting for file changes before starting...[39m
+ ELIFECYCLE  Command failed.
+
+> skool-clone@1.0.0 dev /mnt/c/Users/andre/Documents/sk-cln/skool-clone
+> pnpm --parallel --filter './apps/*' --filter './packages/*' dev
+
+Scope: 4 of 5 workspace projects
+packages/shared dev$ tsc --watch
+apps/web dev$ next dev -p 3000
+apps/api dev$ nodemon
+packages/shared dev: [2J[3J[H10:27:17 PM - Starting compilation in watch mode...
+apps/api dev: [33m[nodemon] 3.1.10[39m
+apps/api dev: [33m[nodemon] to restart at any time, enter `rs`[39m
+apps/api dev: [33m[nodemon] watching path(s): src/**/*[39m
+apps/api dev: [33m[nodemon] watching extensions: ts,js[39m
+apps/api dev: [32m[nodemon] starting `ts-node -r tsconfig-paths/register ./src/index.ts`[39m
+packages/shared dev: 10:27:21 PM - Found 0 errors. Watching for file changes.
+apps/web dev:  ⨯ Failed to start server
+apps/web dev: Error: listen EADDRINUSE: address already in use :::3000
+apps/web dev:     at <unknown> (Error: listen EADDRINUSE: address already in use :::3000)
+apps/web dev:     at new Promise (<anonymous>) {
+apps/web dev:   code: 'EADDRINUSE',
+apps/web dev:   errno: -98,
+apps/web dev:   syscall: 'listen',
+apps/web dev:   address: '::',
+apps/web dev:   port: 3000
+apps/web dev: }
+apps/web dev: [?25h
+apps/web dev: Done
+apps/api dev: Error: listen EADDRINUSE: address already in use :::4000
+apps/api dev:     at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+apps/api dev:     at listenInCluster (node:net:1997:12)
+apps/api dev:     at Server.listen (node:net:2102:7)
+apps/api dev:     at app.listen (/mnt/c/Users/andre/Documents/sk-cln/skool-clone/node_modules/.pnpm/express@4.21.2/node_modules/express/lib/application.js:635:24)
+apps/api dev:     at Object.<anonymous> (/mnt/c/Users/andre/Documents/sk-cln/skool-clone/apps/api/src/index.ts:48:5)
+apps/api dev:     at Module._compile (node:internal/modules/cjs/loader:1738:14)
+apps/api dev:     at Module.m._compile (/mnt/c/Users/andre/Documents/sk-cln/skool-clone/node_modules/.pnpm/ts-node@10.9.2_@types+node@20.19.11_typescript@5.9.2/node_modules/ts-node/src/index.ts:1618:23)
+apps/api dev:     at node:internal/modules/cjs/loader:1871:10
+apps/api dev:     at Object.require.extensions.<computed> [as .ts] (/mnt/c/Users/andre/Documents/sk-cln/skool-clone/node_modules/.pnpm/ts-node@10.9.2_@types+node@20.19.11_typescript@5.9.2/node_modules/ts-node/src/index.ts:1621:12)
+apps/api dev:     at Module.load (node:internal/modules/cjs/loader:1470:32) {
+apps/api dev:   code: 'EADDRINUSE',
+apps/api dev:   errno: -98,
+apps/api dev:   syscall: 'listen',
+apps/api dev:   address: '::',
+apps/api dev:   port: 4000
+apps/api dev: }
+apps/api dev: [31m[nodemon] app crashed - waiting for file changes before starting...[39m
+ ELIFECYCLE  Command failed.
+apps/api dev: [0mGET /api/users/me [33m401[0m 2.041 ms - 29[0m
+apps/api dev: [0mPOST /api/auth/register [32m201[0m 335.336 ms - 694[0m
+apps/api dev: [0mGET /api/users/me [32m200[0m 1.713 ms - 194[0m
+apps/api dev: [0mPOST /api/auth/register [33m400[0m 5.677 ms - 146[0m
+apps/api dev: Error: Email already exists
+apps/api dev:     at UserService.createUser (/mnt/c/Users/andre/Documents/sk-cln/skool-clone/apps/api/src/services/userService.ts:15:13)
+apps/api dev:     at register (/mnt/c/Users/andre/Documents/sk-cln/skool-clone/apps/api/src/controllers/authController.ts:20:36)
+apps/api dev:     at Layer.handle [as handle_request] (/mnt/c/Users/andre/Documents/sk-cln/skool-clone/node_modules/.pnpm/express@4.21.2/node_modules/express/lib/router/layer.js:95:5)
+apps/api dev:     at next (/mnt/c/Users/andre/Documents/sk-cln/skool-clone/node_modules/.pnpm/express@4.21.2/node_modules/express/lib/router/route.js:149:13)
+apps/api dev:     at handleValidationErrors (/mnt/c/Users/andre/Documents/sk-cln/skool-clone/apps/api/src/middleware/validation.ts:13:3)
+apps/api dev:     at Layer.handle [as handle_request] (/mnt/c/Users/andre/Documents/sk-cln/skool-clone/node_modules/.pnpm/express@4.21.2/node_modules/express/lib/router/layer.js:95:5)
+apps/api dev:     at next (/mnt/c/Users/andre/Documents/sk-cln/skool-clone/node_modules/.pnpm/express@4.21.2/node_modules/express/lib/router/route.js:149:13)
+apps/api dev:     at middleware (/mnt/c/Users/andre/Documents/sk-cln/skool-clone/node_modules/.pnpm/express-validator@7.2.1/node_modules/express-validator/lib/middlewares/check.js:16:13)
+apps/api dev:     at processTicksAndRejections (node:internal/process/task_queues:105:5)
+apps/api dev: [0mPOST /api/auth/register [33m409[0m 27.721 ms - 32[0m
+apps/api dev: [0mPOST /api/auth/login [32m200[0m 45.355 ms - 694[0m
+apps/api dev: [0mGET /health [32m200[0m 9.899 ms - 59[0m
+apps/api dev: [0mGET /health [32m200[0m 0.479 ms - 59[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 12.158 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.483 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.326 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.379 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.705 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.304 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.599 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.339 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.371 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.400 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.306 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.527 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.316 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.360 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.403 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.578 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.236 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.139 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.150 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.289 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.459 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.241 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.263 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.209 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.234 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.136 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.271 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.229 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.203 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.217 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.188 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.121 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.809 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.305 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.197 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.166 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.183 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.293 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.496 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.165 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.158 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.197 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.152 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.165 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.126 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.129 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.112 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.375 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.202 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.122 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.720 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.117 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.423 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.115 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.230 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.217 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.132 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.222 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.209 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.182 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.477 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.139 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.221 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.202 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.310 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.120 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.150 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.107 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.274 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.142 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.262 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.121 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.341 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.169 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.134 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.223 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.164 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.162 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.119 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.281 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.116 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.231 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.189 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.210 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.268 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.107 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.108 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.176 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.161 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.187 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.154 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.115 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.219 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.279 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.162 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.130 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.268 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.308 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.138 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.115 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.260 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.137 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.214 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.108 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.210 ms - 154[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.107 ms - 154[0m
+apps/api dev: [0mGET /health [32m200[0m 0.874 ms - 59[0m
+apps/api dev: [0mGET /health [32m200[0m 0.281 ms - 59[0m
+apps/api dev: [0mGET /api/communities [33m404[0m 0.378 ms - 154[0m
+apps/api dev: [0mGET / [33m404[0m 0.140 ms - 139[0m
+apps/api dev: [0mGET / [33m404[0m 0.225 ms - 139[0m
+apps/api dev: Killed
+apps/api dev: [31m[nodemon] app crashed - waiting for file changes before starting...[39m
+apps/api dev: Failed
+apps/api dev: Failed
+apps/api dev: Failed
+apps/api dev: Failed
+apps/api dev: Failed
+/mnt/c/Users/andre/Documents/sk-cln/skool-clone/apps/api:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @skool/api@1.0.0 dev: `nodemon`
+Command failed with signal "SIGTERM"
+/mnt/c/Users/andre/Documents/sk-cln/skool-clone/apps/api:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @skool/api@1.0.0 dev: `nodemon`
+Command failed with signal "SIGTERM"
+/mnt/c/Users/andre/Documents/sk-cln/skool-clone/apps/api:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @skool/api@1.0.0 dev: `nodemon`
+Command failed with signal "SIGTERM"
+/mnt/c/Users/andre/Documents/sk-cln/skool-clone/apps/api:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @skool/api@1.0.0 dev: `nodemon`
+Command failed with signal "SIGTERM"
+/mnt/c/Users/andre/Documents/sk-cln/skool-clone/apps/api:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @skool/api@1.0.0 dev: `nodemon`
+Command failed with signal "SIGTERM"

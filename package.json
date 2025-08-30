@@ -1,0 +1,27 @@
+{
+  "name": "skool-clone",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel --filter './apps/*' --filter './packages/*' dev",
+    "build": "pnpm --filter './apps/*' build",
+    "test": "pnpm --filter './apps/*' --filter './packages/*' test",
+    "lint": "pnpm --filter './apps/*' --filter './packages/*' lint",
+    "format": "prettier --write .",
+    "clean": "pnpm --filter './apps/*' --filter './packages/*' clean",
+    "docker:up": "docker compose -f docker-compose.dev.yml up -d",
+    "docker:down": "docker compose -f docker-compose.dev.yml down",
+    "docker:logs": "docker compose -f docker-compose.dev.yml logs -f",
+    "docker:reset": "docker compose -f docker-compose.dev.yml down -v && docker compose -f docker-compose.dev.yml up -d"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.39.1",
+    "@typescript-eslint/parser": "^8.39.1",
+    "eslint": "^9.33.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.2"
+  }
+}

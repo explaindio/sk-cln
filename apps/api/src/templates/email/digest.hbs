@@ -1,0 +1,7 @@
+<h1>Your {{frequency}} Digest</h1>
+<p>You have {{notificationCount}} new notifications.</p>
+<ul>
+  {{#each notifications}}
+    <li><b>{{this.title}}</b>: {{this.message}}</li>
+  {{/each}}
+</ul>
