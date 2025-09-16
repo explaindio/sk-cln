@@ -122,7 +122,8 @@ model User {
   assignedReports          Report[]         @relation("AssignedReports")
   reviewedReports          Report[]         @relation("ReviewerReports")
   moderationActions        ModerationAction[] @relation(name: "UserModerationActions")
-
+  contentFlags             ContentFlag[]
+  
   @@map("users")
 }
 
@@ -1336,4 +1337,43 @@ model Report {
   @@index([assignedTo])
   @@index([createdAt])
   @@map("reports")
+}
+
+enum ContentType {
+  post
+  comment
+  message
+}
+
+enum FlagType {
+  spam
+  abuse
+  inappropriate
+  offtopic
+}
+
+enum Severity {
+  low
+  medium
+  high
+}
+
+enum FlagStatus {
+  pending
+  resolved
+}
+
+model ContentFlag {
+  id          String       @id @default(cuid())
+  contentId   String
+  contentType ContentType
+  flagType    FlagType
+  severity    Severity
+  flaggedById String
+  status      FlagStatus   @default(pending)
+  createdAt   DateTime     @default(now())
+
+  flaggedBy   User         @relation(fields: [flaggedById], references: [id], onDelete: Cascade)
+
+  @@map("content_flags")
 }

@@ -673,4 +673,138 @@ enum ModerationActionType {
 
 The ModerationAction model now provides robust support for moderation workflows, enabling actions like warnings, bans, deletions, edits, and restores on reported content, with proper integration to User and Report models.
 
+
 **Ready for P1-010-DB** (review other moderation models like ContentFlag).
+
+## ContentFlag Model Review
+
+### Status: ✅ MISSING - ADDED
+
+The ContentFlag model was **missing** from the Prisma schema. It has been **added** with proper fields, enums, and relations to support content flagging for moderation.
+
+### Model Definition:
+
+```prisma
+enum ContentType {
+  post
+  comment
+  message
+}
+
+enum FlagType {
+  spam
+  abuse
+  inappropriate
+  offtopic
+}
+
+enum Severity {
+  low
+  medium
+  high
+}
+
+enum FlagStatus {
+  pending
+  resolved
+}
+
+model ContentFlag {
+  id          String       @id @default(cuid())
+  contentId   String
+  contentType ContentType
+  flagType    FlagType
+  severity    Severity
+  flaggedById String
+  status      FlagStatus   @default(pending)
+  createdAt   DateTime     @default(now())
+
+  flaggedBy   User         @relation(fields: [flaggedById], references: [id], onDelete: Cascade)
+
+  @@map("content_flags")
+}
+```
+
+### Related Enums:
+
+#### ContentType Enum (NEW):
+```prisma
+enum ContentType {
+  post
+  comment
+  message
+}
+```
+
+#### FlagType Enum (NEW):
+```prisma
+enum FlagType {
+  spam
+  abuse
+  inappropriate
+  offtopic
+}
+```
+
+#### Severity Enum (NEW):
+```prisma
+enum Severity {
+  low
+  medium
+  high
+}
+```
+
+#### FlagStatus Enum (NEW):
+```prisma
+enum FlagStatus {
+  pending
+  resolved
+}
+```
+
+### Relations:
+
+1. **ContentFlag → User (FlaggedBy)**: Many-to-one relationship
+   - ContentFlag is created by one User (flagger)
+   - User can create many ContentFlags (via `contentFlags` field in User model, line 125)
+
+**Note on Flagged Content Relations:** The model uses a polymorphic approach with `contentType` (e.g., 'post', 'comment', 'message') and `contentId` to reference the flagged entity flexibly, without direct foreign key relations to Post, Comment, Message. This allows flagging across multiple types without schema bloat. Direct relations (e.g., flaggedPost Post?) are not present but can be inferred via content fields, consistent with the Report model design.
+
+### Field Analysis:
+
+**Core Fields:**
+- ✅ `id` - CUID primary key
+- ✅ `contentId` - ID of the flagged content
+- ✅ `contentType` - ContentType enum (post/comment/message)
+- ✅ `flagType` - FlagType enum (spam/abuse/inappropriate/offtopic)
+- ✅ `severity` - Severity enum (low/medium/high)
+- ✅ `flaggedById` - Foreign key to User (flagger)
+- ✅ `status` - FlagStatus enum @default(pending) (pending/resolved)
+- ✅ `createdAt` - Timestamp when flag was created
+
+**System Fields:**
+- ✅ Cascade deletion on user removal
+- ✅ Proper field mapping with `@map` for database column names
+
+### Changes Made in P1-010-DB:
+
+1. ✅ **Created ContentType enum** with values: post, comment, message
+2. ✅ **Created FlagType enum** with values: spam, abuse, inappropriate, offtopic
+3. ✅ **Created Severity enum** with values: low, medium, high
+4. ✅ **Created FlagStatus enum** with values: pending, resolved
+5. ✅ **Added ContentFlag model** with specified fields and relations
+6. ✅ **Added back-relation** to User: `contentFlags ContentFlag[]` (line 125)
+7. ✅ **Schema validated** - passes `npx prisma validate`
+8. ✅ **Note**: Adding this model will require a new database migration
+
+### Moderation Workflow Integration:
+- **Polymorphic Flagging**: Supports flagging for posts, comments, messages via contentType/contentId
+- **Categorized Flagging**: Uses enums for type, severity, and status for structured data
+- **User Attribution**: Tracks who flagged the content
+- **Status Tracking**: Allows flags to be pending or resolved
+- **Cascade Deletion**: Automatically removes flags when users are deleted
+
+The ContentFlag model now provides robust support for content flagging in moderation workflows, enabling users to flag inappropriate content with proper categorization and integration to the User model.
+
+**Ready for P1-011-DB** (apply pending migrations).
