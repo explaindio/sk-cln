@@ -55,15 +55,15 @@ async function setupTestDatabase() {
         env: { ...process.env, DATABASE_URL: testDbUrl }
       });
       console.log('✅ Migrations applied to test database');
-    } catch (migrateError) {
-      console.warn('⚠️ Migration failed, this might be expected if schema is already up to date:', migrateError.message);
+    } catch (migrateError: any) {
+      console.warn('⚠️ Migration failed, this might be expected if schema is already up to date:', (migrateError as Error).message);
     }
 
     console.log('🎉 Test database setup complete!');
     console.log(`📍 Test DATABASE_URL: ${testDbUrl}`);
     console.log('💡 You can now run integration tests with: pnpm test:integration');
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Failed to setup test database:', error);
 
     // Provide helpful error messages

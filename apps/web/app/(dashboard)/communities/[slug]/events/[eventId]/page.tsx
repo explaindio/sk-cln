@@ -6,6 +6,7 @@ import { Button } from '../../../../../../../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../../../../../../../components/ui/Card';
 import { Loading } from '../../../../../../../components/ui/Loading';
 import { RichTextEditor } from '../../../../../../../components/editor/RichTextEditor';
+import EventRegistration from '../../../../../../../components/events/EventRegistration';
 import {
   Calendar,
   Clock,
@@ -43,13 +44,9 @@ export default function EventDetailPage({ params }: EventDetailPageProps) {
   }
 
   const isPast = new Date(event.startDate) < new Date();
-  const isFull = event.capacity && event.attendees.length >= event.capacity;
-  const isRegistered = event.attendees.some(a => a.status === 'REGISTERED');
-  const isWaitlisted = event.attendees.some(a => a.status === 'WAITLISTED');
-
-  const handleRegister = async () => {
-    await registerForEvent.mutateAsync(params.eventId);
-  };
+  const isFull = event.capacity && event.attendees && event.attendees.length >= event.capacity;
+  const isRegistered = event.attendees && event.attendees.some(a => a.status === 'REGISTERED');
+  const isWaitlisted = event.attendees && event.attendees.some(a => a.status === 'WAITLISTED');
 
   const handleCancel = async () => {
     await cancelRegistration.mutateAsync(params.eventId);
@@ -188,7 +185,7 @@ export default function EventDetailPage({ params }: EventDetailPageProps) {
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center">
                   <Users className="h-5 w-5 mr-2" />
-                  Attendees ({event.attendees.length}
+                  Attendees ({event.attendees?.length || 0}
                   {event.capacity && `/${event.capacity}`})
                 </CardTitle>
                 <Button
@@ -203,22 +200,12 @@ export default function EventDetailPage({ params }: EventDetailPageProps) {
             {showAttendees && (
               <CardContent>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {event.attendees.map((attendee) => (
+                  {event.attendees?.map((attendee) => (
                     <div key={attendee.id} className="flex items-center space-x-2">
-                      {attendee.user.avatar ? (
-                        <Image
-                          src={attendee.user.avatar}
-                          alt={attendee.user.name}
-                          width={32}
-                          height={32}
-                          className="rounded-full"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                          <User className="h-4 w-4 text-gray-600" />
-                        </div>
-                      )}
-                      <span className="text-sm truncate">{attendee.user.name}</span>
+                      <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                        <User className="h-4 w-4 text-gray-600" />
+                      </div>
+                      <span className="text-sm truncate">Attendee</span>
                     </div>
                   ))}
                 </div>
@@ -229,84 +216,18 @@ export default function EventDetailPage({ params }: EventDetailPageProps) {
 
         {/* Registration Sidebar */}
         <div>
-          <Card className="sticky top-4">
-            <CardContent className="p-6">
-              {isPast ? (
-                <div className="text-center">
-                  <XCircle className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-600">This event has ended</p>
-                </div>
-              ) : isRegistered ? (
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-3" />
-                    <p className="font-medium text-green-600">You're registered!</p>
-                  </div>
-
-                  {event.isOnline && event.meetingUrl && (
-                    <a
-                      href={event.meetingUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block"
-                    >
-                      <Button className="w-full">
-                        <Video className="h-4 w-4 mr-2" />
-                        Join Event
-                      </Button>
-                    </a>
-                  )}
-
-                  <Button
-                    variant="outline"
-                    onClick={handleCancel}
-                    isLoading={cancelRegistration.isPending}
-                    className="w-full"
-                  >
-                    Cancel Registration
-                  </Button>
-                </div>
-              ) : isWaitlisted ? (
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <Clock className="h-12 w-12 text-yellow-600 mx-auto mb-3" />
-                    <p className="font-medium text-yellow-600">You're on the waitlist</p>
-                  </div>
-
-                  <Button
-                    variant="outline"
-                    onClick={handleCancel}
-                    isLoading={cancelRegistration.isPending}
-                    className="w-full"
-                  >
-                    Leave Waitlist
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <p className="text-2xl font-bold">
-                      {event.price > 0 ? `$${event.price}` : 'Free'}
-                    </p>
-                    {event.capacity && (
-                      <p className="text-sm text-gray-600 mt-1">
-                        {event.capacity - event.attendees.length} spots left
-                      </p>
-                    )}
-                  </div>
-
-                  <Button
-                    onClick={handleRegister}
-                    isLoading={registerForEvent.isPending}
-                    disabled={isFull && !event.waitlistEnabled}
-                    className="w-full"
-                  >
-                    {isFull ? 'Join Waitlist' : event.price > 0 ? 'Register & Pay' : 'Register'}
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <EventRegistration
+            event={event}
+            isRegistered={isRegistered}
+            isWaitlisted={isWaitlisted}
+            onRegister={async (registrationData) => {
+              // Handle the comprehensive registration data
+              console.log('Registration data:', registrationData);
+              await registerForEvent.mutateAsync(event.id);
+            }}
+            onCancel={onCancel}
+            isLoading={registerForEvent.isPending || cancelRegistration.isPending}
+          />
         </div>
       </div>
     </div>

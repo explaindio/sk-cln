@@ -92,6 +92,26 @@ export function useStreaks() {
   });
 }
 
+export function useRewards() {
+  return useQuery({
+    queryKey: ['rewards'],
+    queryFn: async () => {
+      const { data } = await api.get('/api/gamification/rewards');
+      return data;
+    },
+  });
+}
+
+export function useRedemptionHistory() {
+  return useQuery({
+    queryKey: ['redemption-history'],
+    queryFn: async () => {
+      const { data } = await api.get('/api/gamification/my-redemptions');
+      return data;
+    },
+  });
+}
+
 export function useClaimReward() {
   const queryClient = useQueryClient();
 
@@ -102,6 +122,8 @@ export function useClaimReward() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['points'] });
+      queryClient.invalidateQueries({ queryKey: ['rewards'] });
+      queryClient.invalidateQueries({ queryKey: ['redemption-history'] });
       queryClient.invalidateQueries({ queryKey: ['achievements'] });
     },
   });

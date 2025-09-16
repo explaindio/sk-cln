@@ -12,8 +12,11 @@ interface CourseCardProps {
     description: string;
     thumbnail?: string;
     instructor: {
+      id: string;
+      firstName?: string;
+      lastName?: string;
+      avatarUrl?: string;
       name: string;
-      avatar?: string;
     };
     difficulty: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
     duration: number;
@@ -24,6 +27,7 @@ interface CourseCardProps {
     isEnrolled?: boolean;
   };
   communitySlug: string;
+  searchTerm?: string;
 }
 
 export function CourseCard({ course, communitySlug }: CourseCardProps) {
@@ -40,6 +44,26 @@ export function CourseCard({ course, communitySlug }: CourseCardProps) {
       return `${hours}h ${mins}m`;
     }
     return `${mins}m`;
+  };
+
+  // Simple highlighting
+  const HighlightedText = ({ text, highlight }: { text: string; highlight: string }) => {
+    if (!highlight.trim()) return <span>{text}</span>;
+
+    const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
+    return (
+      <span>
+        {parts.map((part, index) =>
+          part.toLowerCase() === highlight.toLowerCase() ? (
+            <mark key={index} className="bg-yellow-200 px-1 rounded">
+              {part}
+            </mark>
+          ) : (
+            part
+          )
+        )}
+      </span>
+    );
   };
 
   return (
@@ -96,11 +120,11 @@ export function CourseCard({ course, communitySlug }: CourseCardProps) {
           </div>
 
           <h3 className="font-semibold text-lg mb-2 line-clamp-2">
-            {course.title}
+            <HighlightedText text={course.title} highlight={searchTerm || ''} />
           </h3>
 
           <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-            {course.description}
+            <HighlightedText text={course.description || ''} highlight={searchTerm || ''} />
           </p>
 
           <div className="flex items-center space-x-3 text-sm text-gray-500 mb-3">
@@ -115,9 +139,9 @@ export function CourseCard({ course, communitySlug }: CourseCardProps) {
           </div>
 
           <div className="flex items-center space-x-2 pt-3 border-t border-gray-100">
-            {course.instructor.avatar ? (
+            {course.instructor.avatarUrl ? (
               <Image
-                src={course.instructor.avatar}
+                src={course.instructor.avatarUrl}
                 alt={course.instructor.name}
                 width={24}
                 height={24}

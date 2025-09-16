@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api } from '../../lib/api';
-import { useToast } from '../../lib/toast';
+import { api } from '../lib/api';
+import { useToast } from '../lib/toast';
 
-interface Course {
+export interface Course {
   id: string;
   title: string;
   description: string;
@@ -20,7 +20,7 @@ interface Course {
   updatedAt: string;
 }
 
-interface Module {
+export interface Module {
   id: string;
   title: string;
   description?: string;
@@ -28,7 +28,7 @@ interface Module {
   lessons: Lesson[];
 }
 
-interface Lesson {
+export interface Lesson {
   id: string;
   title: string;
   description?: string;
@@ -40,13 +40,43 @@ interface Lesson {
   isPreview: boolean;
 }
 
-export function useCourses(communityId?: string) {
-  return useQuery<Course[]>({
-    queryKey: ['courses', communityId],
+export interface CourseFilters {
+  search?: string;
+  difficulty?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+  minDuration?: number;
+  maxDuration?: number;
+  tags?: string[];
+  page?: number;
+  limit?: number;
+}
+
+export function useCourses(communityId?: string, filters: CourseFilters = {}) {
+  const {
+    search,
+    difficulty,
+    minDuration,
+    maxDuration,
+    tags,
+    page = 1,
+    limit = 20
+  } = filters;
+
+  return useQuery({
+    queryKey: ['courses', communityId, filters],
     queryFn: async () => {
-      const params = communityId ? `?communityId=${communityId}` : '';
-      const { data } = await api.get(`/api/courses${params}`);
-      return data;
+      const params = new URLSearchParams();
+
+      if (communityId) params.append('communityId', communityId);
+      if (search) params.append('search', search);
+      if (difficulty) params.append('difficulty', difficulty);
+      if (minDuration !== undefined) params.append('minDuration', minDuration.toString());
+      if (maxDuration !== undefined) params.append('maxDuration', maxDuration.toString());
+      if (tags && tags.length > 0) params.append('tags', tags.join(','));
+      params.append('page', page.toString());
+      params.append('limit', limit.toString());
+
+      const { data } = await api.get(`/api/courses?${params.toString()}`);
+      return data.courses || data;
     },
   });
 }
@@ -128,6 +158,58 @@ export function useEnrollCourse() {
         type: 'success',
         title: 'Successfully enrolled in course',
       });
+    },
+  });
+}
+
+export function useCourseProgress(courseId: string) {
+  return useQuery({
+    queryKey: ['courseProgress', courseId],
+    queryFn: async () => {
+      const { data } = await api.get(`/api/courses/${courseId}/progress`);
+      return data;
+    },
+    enabled: !!courseId,
+  });
+}
+
+export function useMarkLessonComplete() {
+  const queryClient = useQueryClient();
+  const { addToast } = useToast();
+
+  return useMutation({
+    mutationFn: async (lessonId: string) => {
+      const response = await api.post(`/api/courses/lessons/${lessonId}/complete`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['courseProgress'] });
+      addToast({
+        type: 'success',
+        title: 'Lesson completed',
+      });
+    },
+  });
+}
+
+export function useUpdateVideoProgress() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      lessonId,
+      progress,
+    }: {
+      lessonId: string;
+      progress: number;
+    }) => {
+      const response = await api.post(`/api/courses/lessons/${lessonId}/progress`, {
+        progress,
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['courseProgress'] });
     },
   });
 }

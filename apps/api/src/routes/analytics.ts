@@ -17,6 +17,8 @@ import {
 } from '../middleware/validation/analytics';
 import { analyticsController } from '../controllers/analyticsController';
 import realtimeAnalyticsRoutes from './realtimeAnalytics.routes';
+import behavioralAnalyticsRoutes from './behavioral-analytics.routes';
+import behavioralAnalyticsRoutes from './behavioral-analytics.routes';
 
 const router = Router();
 
@@ -123,5 +125,11 @@ router.get('/export',
 
 // Mount real-time analytics routes
 router.use('/realtime', realtimeAnalyticsRoutes);
+
+// Mount behavioral analytics routes
+router.use('/behavioral', behavioralAnalyticsRoutes);
+
+// Mount behavioral analytics routes
+router.use('/behavioral', behavioralAnalyticsRoutes);
 
 export default router;

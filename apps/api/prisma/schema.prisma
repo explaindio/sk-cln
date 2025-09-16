@@ -76,11 +76,14 @@ model User {
   comments                 Comment[]
   communities              CommunityMember[]
   conversationParticipants ConversationParticipant[]
+  conversations            Conversation[]
   customer                 Customer?
   enrollments              Enrollment[]
   eventAttendances         EventAttendee[]
   createdEvents            Event[]
+  eventReminders           EventReminder[]
   sentMessages             Message[]
+  messageReactions         MessageReaction[]
   notificationPreferences  NotificationPreference?
   notifications            Notification[]
   points                   Points[]
@@ -104,6 +107,9 @@ model User {
   files                    File[]
   fileShares               FileShare[]      @relation("FileSharer")
   sharedFiles              FileShare[]
+  courses                  Course[]          @relation("CourseInstructor")
+  recommendationFeedback   RecommendationFeedback[]
+  ownedCommunities         Community[]       @relation("CommunityOwner")
 
   // Feature flag relations
   createdFeatureFlags      FeatureFlag[]    @relation("FeatureFlagCreated")
@@ -115,6 +121,7 @@ model User {
   reports                  Report[]         @relation("ReporterReports")
   assignedReports          Report[]         @relation("AssignedReports")
   reviewedReports          Report[]         @relation("ReviewerReports")
+  moderationActions        ModerationAction[] @relation(name: "UserModerationActions")
 
   @@map("users")
 }
@@ -125,6 +132,10 @@ model UserPreferences {
   showLeaderboard    Boolean  @default(true) @map("show_leaderboard")
   emailNotifications Boolean  @default(true) @map("email_notifications")
   pushNotifications  Boolean  @default(true) @map("push_notifications")
+  categories         String[]
+  interests          String[]
+  recommendationFrequency String @default("weekly")
+  optOut             Boolean  @default(false)
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
   user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -156,6 +167,7 @@ model Community {
   points       Points[]
   posts        Post[]
   competitions CommunityCompetition[] @relation("CommunityToCommunityCompetition")
+  owner        User                   @relation("CommunityOwner", fields: [ownerId], references: [id])
 
   @@map("communities")
 }
@@ -256,20 +268,34 @@ model Reaction {
   @@map("reactions")
 }
 
+enum CourseDifficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
 model Course {
-  id          String         @id @default(uuid())
-  communityId String         @map("community_id")
-  title       String
-  description String?
-  thumbnail   String?
-  isPublished Boolean        @default(false) @map("is_published")
-  position    Int            @default(0)
-  createdAt   DateTime       @default(now()) @map("created_at")
-  updatedAt   DateTime       @updatedAt @map("updated_at")
-  modules     CourseModule[]
-  community   Community      @relation(fields: [communityId], references: [id], onDelete: Cascade)
-  enrollments Enrollment[]
-  progress    UserProgress[]
+  id            String            @id @default(uuid())
+  communityId   String            @map("community_id")
+  instructorId  String            @map("instructor_id")
+  title         String
+  description   String?
+  thumbnail     String?
+  price         Float             @default(0)
+  currency      String            @default("USD")
+  difficulty    CourseDifficulty  @default(BEGINNER)
+  duration      Int?              // total minutes
+  tags          String[]
+  isPublished   Boolean           @default(false) @map("is_published")
+  enrollmentCount Int             @default(0) @map("enrollment_count")
+  position      Int               @default(0)
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+  modules       CourseModule[]
+  community     Community         @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  instructor    User              @relation("CourseInstructor", fields: [instructorId], references: [id])
+  enrollments   Enrollment[]
+  progress      UserProgress[]
 
   @@map("courses")
 }
@@ -326,13 +352,14 @@ model UserProgress {
 
 model Conversation {
   id           String                    @id @default(uuid())
-  type         String                    @default("direct")
+  type         ConversationType          @default(direct)
   name         String?
-  createdBy    String                    @map("created_by")
+  createdById  String                    @map("created_by")
   createdAt    DateTime                  @default(now()) @map("created_at")
   updatedAt    DateTime                  @updatedAt @map("updated_at")
   participants ConversationParticipant[]
   messages     Message[]
+  creator      User                      @relation(fields: [createdById], references: [id])
 
   @@map("conversations")
 }
@@ -343,6 +370,8 @@ model ConversationParticipant {
   userId         String       @map("user_id")
   joinedAt       DateTime     @default(now()) @map("joined_at")
   lastReadAt     DateTime?    @map("last_read_at")
+  isAdmin        Boolean      @default(false)
+  role           String?
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -355,17 +384,34 @@ model Message {
   conversationId String       @map("conversation_id")
   senderId       String       @map("sender_id")
   content        String
-  messageType    String       @default("text") @map("message_type")
+  messageType    MessageType  @default(text) @map("message_type")
+  metadata       Json?
   attachments    String[]     @map("attachments")
   isEdited       Boolean      @default(false) @map("is_edited")
   isPinned       Boolean      @default(false) @map("is_pinned")
+  isDeleted      Boolean      @default(false) @map("is_deleted")
   reactions      Json?
   createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
   editedAt       DateTime?    @map("edited_at")
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender         User         @relation(fields: [senderId], references: [id])
+  messageReactions MessageReaction[]
 
   @@map("messages")
+}
+
+model MessageReaction {
+  id        String   @id @default(uuid())
+  messageId String   @map("message_id")
+  userId    String   @map("user_id")
+  type      String   @default("like")
+  createdAt DateTime @default(now()) @map("created_at")
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@map("message_reactions")
 }
 
 model Notification {
@@ -406,6 +452,7 @@ model Event {
   updatedAt     DateTime        @updatedAt @map("updated_at")
   remindersSent Boolean         @default(false) @map("reminders_sent")
   attendees     EventAttendee[]
+  reminders     EventReminder[]
   community     Community       @relation(fields: [communityId], references: [id], onDelete: Cascade)
   creator       User            @relation(fields: [creatorId], references: [id])
 
@@ -413,16 +460,31 @@ model Event {
 }
 
 model EventAttendee {
-  id        String   @id @default(uuid())
-  eventId   String   @map("event_id")
-  userId    String   @map("user_id")
-  status    String   @default("going")
-  createdAt DateTime @default(now()) @map("created_at")
-  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String      @id @default(uuid())
+  eventId   String      @map("event_id")
+  userId    String      @map("user_id")
+  status    EventStatus @default(confirmed)
+  joinedAt  DateTime    @default(now()) @map("joined_at")
+  event     Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, userId])
   @@map("event_attendees")
+}
+
+model EventReminder {
+  id         String    @id @default(uuid())
+  eventId    String    @map("event_id")
+  userId     String    @map("user_id")
+  remindAt   DateTime  @map("remind_at")
+  sent       Boolean   @default(false)
+  sentAt     DateTime? @map("sent_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  event      Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId, remindAt])
+  @@map("event_reminders")
 }
 
 model Points {
@@ -765,8 +827,8 @@ model SearchQuery {
 
 // Moderation Models
 model ModerationLog {
-  id            String          @id @default(cuid())
-  action        ModerationAction
+  id            String                @id @default(cuid())
+  action        ModerationLogAction
   targetType    String          // 'post', 'comment', 'user', 'message'
   targetId      String
   moderatorId   String
@@ -835,6 +897,29 @@ model AutoModerationRule {
   @@index([isActive])
   @@index([priority])
   @@map("auto_moderation_rules")
+}
+
+enum ModerationActionType {
+  WARN
+  BAN
+  DELETE
+  EDIT
+  RESTORE
+}
+
+model ModerationAction {
+  id          String               @id @default(cuid())
+  moderatorId String
+  reportId    String
+  actionType  ModerationActionType
+  reason      String?
+  duration    Int?                 // for temporary bans, e.g., temp ban duration in days
+  createdAt   DateTime             @default(now())
+
+  moderator   User                 @relation(fields: [moderatorId], references: [id], name: "UserModerationActions")
+  report      Report               @relation(fields: [reportId], references: [id], onDelete: Cascade, name: "ReportModerationActions")
+
+  @@map("moderation_actions")
 }
 
 // Feature Flags Models
@@ -937,7 +1022,6 @@ model FeatureSegment {
   @@index([type])
   @@map("feature_segments")
 }
-
 
 enum PointType {
   POST_CREATED
@@ -1054,7 +1138,7 @@ enum EmailStatus {
   FAILED
 }
 
-enum ModerationAction {
+enum ModerationLogAction {
   APPROVE
   REJECT
   DELETE
@@ -1162,6 +1246,24 @@ enum SegmentType {
   RANDOM
 }
 
+enum EventStatus {
+  confirmed
+  declined
+  maybe
+}
+
+enum ConversationType {
+  direct
+  group
+}
+
+enum MessageType {
+  text
+  image
+  file
+  video
+}
+
 enum UserRole {
   USER
   MODERATOR
@@ -1189,6 +1291,21 @@ enum ReportReason {
   OTHER
 }
 
+model RecommendationFeedback {
+  id              String   @id @default(uuid())
+  userId          String
+  recommendationId String
+  rating          Int
+  comment         String?
+  helpful         Boolean?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("recommendation_feedback")
+}
+
 model Report {
   id            String      @id @default(cuid())
   reporterId    String      @map("reporter_id")
@@ -1211,6 +1328,7 @@ model Report {
   reporter      User        @relation("ReporterReports", fields: [reporterId], references: [id])
   assigned      User?       @relation("AssignedReports", fields: [assignedTo], references: [id])
   reviewer      User?       @relation("ReviewerReports", fields: [reviewedById], references: [id])
+  moderationActions ModerationAction[] @relation(name: "ReportModerationActions")
 
   @@index([reporterId])
   @@index([targetType, targetId])
@@ -1219,4 +1337,3 @@ model Report {
   @@index([createdAt])
   @@map("reports")
 }
-

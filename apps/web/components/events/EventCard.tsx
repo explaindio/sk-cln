@@ -2,8 +2,11 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Card, CardContent } from '@/components/ui/Card';
-import { format } from 'date-fns';
+import { useState } from 'react';
+import { format, differenceInDays, isPast } from 'date-fns';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Calendar,
   Clock,
@@ -11,141 +14,213 @@ import {
   Users,
   Video,
   DollarSign,
-  CheckCircle
+  CheckCircle,
+  Map,
+  Clock as ClockIcon
 } from 'lucide-react';
+import { Event } from '../../hooks/useEvents'; // Adjust path if needed
 
 interface EventCardProps {
-  event: {
-    id: string;
-    title: string;
-    description: string;
-    startDate: string;
-    endDate: string;
-    location?: string;
-    isOnline: boolean;
-    thumbnail?: string;
-    capacity?: number;
-    attendeeCount: number;
-    price: number;
-    currency: string;
-    isRegistered?: boolean;
-    organizer: {
-      name: string;
-      avatar?: string;
-    };
-  };
+  event: Event;
+  isRegistered?: boolean;
+  onRSVP?: (eventId: string) => Promise<void>;
   communitySlug: string;
+  registrationDeadline?: string; // Optional for countdown
 }
 
-export function EventCard({ event, communitySlug }: EventCardProps) {
-  const isFull = event.capacity && event.attendeeCount >= event.capacity;
-  const isPast = new Date(event.startDate) < new Date();
+export function EventCard({ 
+  event, 
+  isRegistered = false, 
+  onRSVP, 
+  communitySlug, 
+  registrationDeadline 
+}: EventCardProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const attendeeCount = event.attendees?.length || 0;
+  const isFull = event.capacity && attendeeCount >= event.capacity;
+  const eventStart = new Date(event.startDate);
+  const isPastEvent = isPast(eventStart);
+  const deadlineDate = registrationDeadline ? new Date(registrationDeadline) : null;
+  const daysLeft = deadlineDate ? differenceInDays(deadlineDate, new Date()) : null;
+
+  const handleRSVP = async () => {
+    if (!onRSVP || isLoading || isFull || isPastEvent) return;
+    setIsLoading(true);
+    try {
+      await onRSVP(event.id);
+    } catch (error) {
+      console.error('RSVP failed:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getMapUrl = () => {
+    if (event.isOnline || !event.location) return null;
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`;
+  };
 
   return (
-    <Link href={`/communities/${communitySlug}/events/${event.id}`}>
-      <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-        <div className="relative aspect-video bg-gray-200">
-          {event.thumbnail ? (
-            <Image
-              src={event.thumbnail}
-              alt={event.title}
-              fill
-              className="object-cover rounded-t-lg"
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <Calendar className="h-12 w-12 text-gray-400" />
-            </div>
-          )}
+    <Card className="h-full flex flex-col overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-200 rounded-lg border-0 bg-white">
+      {/* Header with Image */}
+      <div className="relative aspect-[4/3] bg-gradient-to-br from-blue-50 to-indigo-100 overflow-hidden">
+        {event.thumbnail ? (
+          <Image
+            src={event.thumbnail}
+            alt={event.title}
+            fill
+            className="object-cover"
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full bg-gradient-to-br from-blue-50 to-indigo-100">
+            <Calendar className="h-12 w-12 text-blue-500" />
+          </div>
+        )}
 
-          {event.isRegistered && (
-            <div className="absolute top-2 right-2 bg-green-600 text-white px-2 py-1 rounded flex items-center">
-              <CheckCircle className="h-4 w-4 mr-1" />
-              Registered
-            </div>
-          )}
+        {/* RSVP Status Badge */}
+        {isRegistered && (
+          <Badge className="absolute top-3 right-3 bg-green-100 text-green-800 border-green-200">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Registered
+          </Badge>
+        )}
 
-          {isPast && (
-            <div className="absolute top-2 left-2 bg-gray-800 text-white px-2 py-1 rounded">
-              Past Event
-            </div>
-          )}
-        </div>
+        {/* Past Event Badge */}
+        {isPastEvent && (
+          <Badge className="absolute top-3 left-3 bg-gray-100 text-gray-800 border-gray-200">
+            Past Event
+          </Badge>
+        )}
 
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between mb-2">
-            <div className="text-primary-600 text-sm font-medium">
-              {format(new Date(event.startDate), 'MMM d, yyyy')}
+        {/* Deadline Badge */}
+        {daysLeft !== null && daysLeft >= 0 && (
+          <Badge 
+            className={`absolute bottom-3 left-3 ${
+              daysLeft <= 3 ? 'bg-red-100 text-red-800 border-red-200' : 'bg-yellow-100 text-yellow-800 border-yellow-200'
+            }`}
+          >
+            <ClockIcon className="h-3 w-3 mr-1" />
+            {daysLeft === 0 ? 'Today' : `${daysLeft} days left`}
+          </Badge>
+        )}
+      </div>
+
+      {/* Content */}
+      <CardContent className="p-4 flex-1 flex flex-col justify-between">
+        <CardHeader className="p-0 mb-3">
+          {/* Date and Price */}
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-medium text-gray-900">
+              {format(eventStart, 'MMM dd, yyyy')}
             </div>
-            {event.price > 0 ? (
-              <div className="flex items-center text-sm font-medium">
-                <DollarSign className="h-4 w-4" />
-                {event.price}
-              </div>
-            ) : (
-              <span className="text-green-600 text-sm font-medium">FREE</span>
-            )}
+            <div className="flex items-center space-x-1">
+              {event.price > 0 ? (
+                <>
+                  <DollarSign className="h-4 w-4 text-green-600" />
+                  <span className="text-sm font-semibold text-green-600">{event.currency} {event.price}</span>
+                </>
+              ) : (
+                <Badge variant="secondary" className="bg-green-100 text-green-800">Free</Badge>
+              )}
+            </div>
           </div>
 
-          <h3 className="font-semibold text-lg mb-2 line-clamp-2">
+          {/* Title */}
+          <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-2 leading-tight">
             {event.title}
           </h3>
 
-          <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+          {/* Description */}
+          <p className="text-sm text-gray-600 mb-4 line-clamp-3">
             {event.description}
           </p>
+        </CardHeader>
 
-          <div className="space-y-2 text-sm text-gray-500">
-            <div className="flex items-center">
-              <Clock className="h-4 w-4 mr-2" />
-              {format(new Date(event.startDate), 'h:mm a')}
-            </div>
-
-            <div className="flex items-center">
-              {event.isOnline ? (
-                <>
-                  <Video className="h-4 w-4 mr-2" />
-                  Online Event
-                </>
-              ) : (
-                <>
-                  <MapPin className="h-4 w-4 mr-2" />
-                  {event.location || 'Location TBA'}
-                </>
-              )}
-            </div>
-
-            <div className="flex items-center">
-              <Users className="h-4 w-4 mr-2" />
-              {event.capacity ? (
-                <span className={isFull ? 'text-red-600 font-medium' : ''}>
-                  {event.attendeeCount}/{event.capacity} attendees
-                  {isFull && ' (FULL)'}
-                </span>
-              ) : (
-                <span>{event.attendeeCount} attendees</span>
-              )}
-            </div>
+        {/* Event Details */}
+        <div className="space-y-2 mb-4 text-sm text-gray-600">
+          <div className="flex items-center">
+            <Clock className="h-4 w-4 mr-2 text-gray-400" />
+            <span>{format(eventStart, 'h:mm a')} - {format(new Date(event.endDate), 'h:mm a')}</span>
           </div>
 
-          <div className="flex items-center space-x-2 pt-3 mt-3 border-t border-gray-100">
-            {event.organizer.avatar ? (
-              <Image
-                src={event.organizer.avatar}
-                alt={event.organizer.name}
-                width={24}
-                height={24}
-                className="rounded-full"
-              />
+          <div className="flex items-center">
+            {event.isOnline ? (
+              <>
+                <Video className="h-4 w-4 mr-2 text-gray-400" />
+                <span className="text-blue-600 font-medium">Online • {event.meetingUrl ? 'Zoom Link Available' : 'Virtual Event'}</span>
+              </>
             ) : (
-              <div className="w-6 h-6 bg-gray-300 rounded-full" />
+              <>
+                <MapPin className="h-4 w-4 mr-2 text-gray-400" />
+                {getMapUrl() ? (
+                  <a
+                    href={getMapUrl()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline font-medium"
+                  >
+                    {event.location}
+                  </a>
+                ) : (
+                  <span>{event.location || 'Location TBD'}</span>
+                )}
+              </>
             )}
-            <span className="text-sm text-gray-600">
-              {event.organizer.name}
+          </div>
+
+          <div className="flex items-center">
+            <Users className="h-4 w-4 mr-2 text-gray-400" />
+            <span className={`font-medium ${isFull ? 'text-red-600' : 'text-gray-900'}`}>
+              {attendeeCount} {event.capacity ? `/${event.capacity}` : ''} attendees
+              {isFull && ' • Full'}
             </span>
           </div>
-        </CardContent>
-      </Card>
-    </Link>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-2 pt-2">
+          <Button 
+            asChild 
+            variant="outline" 
+            className="flex-1"
+            disabled={isPastEvent}
+          >
+            <Link href={`/communities/${communitySlug}/events/${event.id}`}>
+              View Details
+            </Link>
+          </Button>
+
+          {onRSVP && !isRegistered && !isPastEvent && (
+            <Button 
+              onClick={handleRSVP} 
+              disabled={isLoading || isFull} 
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+              variant="default"
+            >
+              {isLoading ? (
+                <>
+                  <span className="mr-2 animate-spin">⏳</span>
+                  Processing...
+                </>
+              ) : isFull ? (
+                'Full'
+              ) : (
+                'RSVP Now'
+              )}
+            </Button>
+          )}
+
+          {isRegistered && (
+            <Button 
+              variant="secondary" 
+              disabled={isPastEvent}
+              className="flex-1"
+            >
+              Registered
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

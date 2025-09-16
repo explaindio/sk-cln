@@ -6,9 +6,59 @@ import { BadRequestError, NotFoundError } from '../utils/errors';
 
 export const courseController = {
   async getCourses(req: Request, res: Response) {
-    const { communityId } = req.query;
-    const courses = await courseService.getCourses(communityId as string);
-    res.json(courses);
+    const {
+      communityId,
+      search,
+      difficulty,
+      minDuration,
+      maxDuration,
+      tags,
+      page = 1,
+      limit = 20
+    } = req.query;
+
+    const options = {
+      communityId: communityId as string,
+      search: search as string,
+      difficulty: (difficulty as 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED'),
+      minDuration: minDuration ? parseInt(minDuration as string) : undefined,
+      maxDuration: maxDuration ? parseInt(maxDuration as string) : undefined,
+      tags: tags ? (tags as string).split(',') : undefined,
+      offset: ((page as number) - 1) * (limit as number),
+      limit: parseInt(limit as string)
+    };
+
+    const courses = await courseService.getCourses(options);
+
+    // Log search query if search or filters are used
+    if (search || difficulty || minDuration || maxDuration || tags) {
+      const userId = (req as any).user?.id;
+      await prisma.searchQuery.create({
+        data: {
+          userId: userId || null,
+          query: search as string || '',
+          filters: {
+            difficulty,
+            minDuration,
+            maxDuration,
+            tags: tags ? (tags as string).split(',') : [],
+            communityId
+          },
+          page: parseInt(page as string),
+          resultsCount: courses.length,
+          took: 0 // Could measure actual time
+        }
+      });
+    }
+
+    res.json({
+      courses,
+      pagination: {
+        page: parseInt(page as string),
+        limit: parseInt(limit as string),
+        total: courses.length // For full count, would need separate query
+      }
+    });
   },
 
   async getCourse(req: Request, res: Response) {

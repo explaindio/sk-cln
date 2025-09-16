@@ -27,6 +27,7 @@ import notificationRoutes from './routes/notification';
 // import paymentRoutes from './routes/payment.routes';
 import adminMetricsRoutes from './routes/admin/metrics.routes';
 import analyticsRoutes from './routes/analytics';
+import recommendationRoutes from './routes/recommendation.routes';
 import { healthCheck } from './controllers/healthController';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { requestId } from './middleware/requestId';
@@ -90,6 +91,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin/metrics', adminMetricsRoutes);
 app.use('/api/moderation', moderationRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/recommendations', recommendationRoutes);
 app.use('/track', trackingRoutes);
 
 // Health check

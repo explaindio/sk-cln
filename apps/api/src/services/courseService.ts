@@ -3,32 +3,84 @@ import { NotFoundError, BadRequestError } from '../utils/errors';
 import { notificationService } from './notification.service';
 
 export class CourseService {
-  async getCourses(communityId?: string) {
-    const where = communityId ? { communityId } : {};
+  async getCourses(options: {
+    communityId?: string;
+    search?: string;
+    difficulty?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+    minDuration?: number;
+    maxDuration?: number;
+    tags?: string[];
+    limit?: number;
+    offset?: number;
+  } = {}) {
+    const {
+      communityId,
+      search,
+      difficulty,
+      minDuration,
+      maxDuration,
+      tags,
+      limit = 20,
+      offset = 0
+    } = options;
 
-    return prisma.course.findMany({
+    const where: any = {
+      isPublished: true,
+      ...(communityId && { communityId }),
+      ...(search && {
+        OR: [
+          { title: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } }
+        ]
+      }),
+      ...(difficulty && { difficulty }),
+      ...(minDuration !== undefined || maxDuration !== undefined ? {
+        duration: {
+          ...(minDuration !== undefined && { gte: minDuration }),
+          ...(maxDuration !== undefined && { lte: maxDuration })
+        }
+      } : {}),
+      ...(tags && tags.length > 0 && { tags: { hasSome: tags } })
+    };
+
+    const courses = await prisma.course.findMany({
       where,
       include: {
-        community: true,
-        modules: {
-          include: {
-            lessons: {
-              orderBy: { position: 'asc' },
-            },
-          },
-          orderBy: { position: 'asc' },
-        },
-        progress: {
+        community: {
           select: {
             id: true,
-            progress: true,
-            status: true,
-            completedAt: true,
-          },
+            name: true,
+            slug: true
+          }
         },
+        instructor: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true
+          }
+        },
+        _count: {
+          select: {
+            enrollments: true
+          }
+        }
       },
-      orderBy: { position: 'asc' },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      skip: offset
     });
+
+    // Compute instructor name
+    return courses.map(course => ({
+      ...course,
+      instructor: {
+        ...course.instructor,
+        name: `${course.instructor.firstName || ''} ${course.instructor.lastName || ''}`.trim() || 'Unknown Instructor'
+      },
+      enrollmentCount: course._count.enrollments
+    }));
   }
 
   async getCourse(courseId: string) {
