@@ -12,6 +12,7 @@ const DEFAULT_ALLOWLIST = [
   '/api/search',
   '/api/communities',
   '/api/courses',
+  '/api/users',
 ];
 
 function getAllowlist(): string[] {

@@ -30,6 +30,8 @@ describe('Prometheus route normalization', () => {
   it('normalizes routes and enforces allowlist', async () => {
     // Allowed prefix: should appear with normalized :email
     await request(app).get('/api/notifications/test-user@example.com');
+    // Allowed prefix for users: should appear with :slug
+    await request(app).get('/api/users/some-user-slug');
     // Not allowlisted: should bucket to /other
     await request(app).get('/unlisted/this-is-a-sluggy-path');
 
@@ -39,8 +41,9 @@ describe('Prometheus route normalization', () => {
     expect(res.text).toContain('# TYPE http_requests_by_route_total counter');
     // Email normalization under allowlisted prefix
     expect(res.text).toMatch(/http_requests_by_route_total\{[^}]*route=\"\/api\/notifications\/:email\"[^}]*\} \d+/);
+    // Users slug normalization under allowlisted prefix
+    expect(res.text).toMatch(/http_requests_by_route_total\{[^}]*route=\"\/api\/users\/:slug\"[^}]*\} \d+/);
     // Non-allowlisted path gets folded to /other
     expect(res.text).toMatch(/http_requests_by_route_total\{[^}]*route=\"\/other\"[^}]*\} \d+/);
   });
 });
-

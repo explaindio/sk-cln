@@ -14,7 +14,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      METRICS_ROUTE_ALLOWLIST: "/health,/metrics,/api/posts,/api/messages,/api/analytics,/api/notifications,/api/search,/api/communities,/api/courses"
+      METRICS_ROUTE_ALLOWLIST: "/health,/metrics,/api/posts,/api/messages,/api/analytics,/api/notifications,/api/search,/api/communities,/api/courses,/api/users"
     steps:
       - uses: actions/checkout@v4
       
