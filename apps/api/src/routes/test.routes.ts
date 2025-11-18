@@ -6,9 +6,10 @@ const router = Router();
 // Test-only rate-limited endpoint to deterministically produce 429s
 const testLimiter = rateLimit({
   windowMs: 30 * 1000,
-  max: 1,
+  limit: 1,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: () => 'test-key',
 });
 
 router.get('/test/limited', testLimiter, (_req, res) => {
@@ -16,4 +17,3 @@ router.get('/test/limited', testLimiter, (_req, res) => {
 });
 
 export default router;
-

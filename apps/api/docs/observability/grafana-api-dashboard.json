@@ -72,6 +72,23 @@
     },
     {
       "type": "barchart",
+      "title": "Socket Events by Type (5m)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROM}" },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "orientation": "auto"
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(socket_events_total[5m])) by (event)",
+          "legendFormat": "{{event}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "barchart",
       "title": "Top Routes (5m)",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "${DS_PROM}" },
@@ -154,4 +171,3 @@
     }
   ]
 }
-
