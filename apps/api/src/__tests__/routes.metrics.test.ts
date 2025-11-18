@@ -85,5 +85,4 @@ describe('Prometheus metrics encodings', () => {
   });
 });
 
-// Note: rate-limit (429) visibility tests omitted here to avoid global
-// request counters being affected by other suites consuming limiter buckets.
+// Deterministic 429 test omitted for stability across suites.

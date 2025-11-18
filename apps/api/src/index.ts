@@ -56,6 +56,15 @@ import { requestTiming } from './middleware/timing';
 import metricsRoutes from './routes/metrics';
 import { initializeAnalyticsSocket } from './services/analytics.socket.service';
 import { cronService } from './services/cron.service';
+let testRoutes: any;
+if (process.env.NODE_ENV === 'test') {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    testRoutes = require('./routes/test.routes').default;
+  } catch (e) {
+    // no-op in non-test or if file missing
+  }
+}
 
 // Initialize push service only if VAPID keys are configured
 let pushService: any;
@@ -142,6 +151,9 @@ if (analyticsRoutes) {
 }
 app.use('/api/recommendations', recommendationRoutes);
 app.use('/track', trackingRoutes);
+if (testRoutes) {
+  app.use('/', testRoutes);
+}
 
 // Health check
 app.get('/health', healthCheck);
