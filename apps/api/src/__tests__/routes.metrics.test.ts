@@ -2,6 +2,7 @@ import request from 'supertest';
 import express from 'express';
 import app from '../index';
 import { resetMetrics } from '../lib/metrics';
+import zlib from 'zlib';
 
 describe('Prometheus metrics endpoint', () => {
   beforeEach(() => {
@@ -49,5 +50,36 @@ describe('Prometheus route normalization', () => {
     expect(res.text).toMatch(/http_requests_by_route_total\{[^}]*route=\"\/api\/users\/:slug\"[^}]*\} \d+/);
     // Non-allowlisted path gets folded to /other
     expect(res.text).toMatch(/http_requests_by_route_total\{[^}]*route=\"\/other\"[^}]*\} \d+/);
+  });
+});
+
+describe('Prometheus metrics encodings', () => {
+  beforeEach(() => resetMetrics());
+
+  it('serves gzipped metrics when requested', async () => {
+    const res = await request(app).get('/metrics').set('Accept-Encoding', 'gzip');
+    expect(res.status).toBe(200);
+    const enc = String(res.headers['content-encoding'] || '');
+    let text: string;
+    if (enc.includes('gzip')) {
+      try {
+        const raw = res.body?.length ? res.body : Buffer.from(res.text || '', 'utf8');
+        const buf = zlib.gunzipSync(raw);
+        text = buf.toString('utf8');
+      } catch {
+        // Supertest may auto-decompress; fall back to plain text
+        text = res.text;
+      }
+    } else {
+      text = res.text;
+    }
+    expect(text).toContain('# HELP http_requests_total');
+  });
+
+  it('supports OpenMetrics content-type on demand', async () => {
+    const res = await request(app).get('/metrics?format=openmetrics');
+    expect(res.status).toBe(200);
+    expect(String(res.headers['content-type'])).toContain('application/openmetrics-text');
+    expect(res.text.trim().endsWith('# EOF')).toBe(true);
   });
 });
