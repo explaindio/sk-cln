@@ -3,6 +3,7 @@ type Status = string;
 
 const requestCounters: Map<string, number> = new Map(); // key: method|status
 const routeCounters: Map<string, number> = new Map();   // key: method|status|route
+const socketEventCounters: Map<string, number> = new Map(); // key: eventType
 let reqDurationMsSum = 0;
 let reqDurationCount = 0;
 // Histogram buckets (milliseconds)
@@ -13,6 +14,7 @@ const bucketCounts: Map<number, number> = new Map(DURATION_BUCKETS.map((b) => [b
 export function resetMetrics(): void {
   requestCounters.clear();
   routeCounters.clear();
+  socketEventCounters.clear();
   reqDurationMsSum = 0;
   reqDurationCount = 0;
   // Clear histogram counts; renderPrometheus guards with `|| 0`
@@ -37,6 +39,12 @@ export function recordRequest(method: Method, status: Status, durationMs: number
       break;
     }
   }
+}
+
+// Record a socket event by type (e.g., connect, disconnect, message)
+export function recordSocketEvent(eventType: string) {
+  const key = eventType || 'unknown';
+  socketEventCounters.set(key, (socketEventCounters.get(key) || 0) + 1);
 }
 
 export function renderPrometheus(): string {
@@ -97,6 +105,15 @@ export function renderPrometheus(): string {
   lines.push('# HELP build_info Application build information');
   lines.push('# TYPE build_info gauge');
   lines.push(`build_info{version="${version}",node_version="${nodeVersion}"} 1`);
+
+  // Socket events by type (if any recorded)
+  if (socketEventCounters.size > 0) {
+    lines.push('# HELP socket_events_total Total socket events by type');
+    lines.push('# TYPE socket_events_total counter');
+    for (const [eventType, val] of socketEventCounters.entries()) {
+      lines.push(`socket_events_total{event="${eventType}"} ${val}`);
+    }
+  }
 
   return lines.join('\n') + '\n';
 }

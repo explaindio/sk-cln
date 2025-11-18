@@ -2,6 +2,7 @@ import { Server as HttpServer } from 'http';
 import { Server as SocketServer, Socket } from 'socket.io';
 import { verifyAccessToken } from '../utils/jwt';
 import { prisma } from '../lib/prisma';
+import { recordSocketEvent } from '../lib/metrics';
 
 export class SocketService {
   private io: SocketServer;
@@ -14,6 +15,22 @@ export class SocketService {
         credentials: true,
       },
     });
+
+    // Optional: enable Redis adapter for horizontal scaling if REDIS_URL and adapter are available
+    try {
+      const url = process.env.REDIS_URL;
+      if (url) {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { createAdapter } = require('@socket.io/redis-adapter');
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { Redis } = require('ioredis');
+        const pubClient = new Redis(url);
+        const subClient = pubClient.duplicate();
+        this.io.adapter(createAdapter(pubClient, subClient));
+      }
+    } catch (err) {
+      // Adapter is optional; continue without clustering if modules are unavailable
+    }
 
     this.initialize();
   }
@@ -32,6 +49,7 @@ export class SocketService {
     });
 
     this.io.on('connection', (socket) => {
+      recordSocketEvent('connect');
       this.handleConnection(socket);
     });
   }
@@ -47,7 +65,7 @@ export class SocketService {
     this.userSockets.get(userId)!.add(socket.id);
 
     // Update last active time in database
-    prisma.user.update({
+    prisma.users.update({
       where: { id: userId },
       data: { lastActive: new Date() },
     }).catch(error => {
@@ -62,14 +80,17 @@ export class SocketService {
 
     // Handle events
     socket.on('join_conversation', (conversationId: string) => {
+      recordSocketEvent('join_conversation');
       socket.join(`conversation:${conversationId}`);
     });
 
     socket.on('leave_conversation', (conversationId: string) => {
+      recordSocketEvent('leave_conversation');
       socket.leave(`conversation:${conversationId}`);
     });
 
     socket.on('typing', ({ conversationId, isTyping, messageId }: any) => {
+      recordSocketEvent('typing');
       socket.to(`conversation:${conversationId}`).emit('user_typing', {
         userId,
         conversationId,
@@ -80,6 +101,7 @@ export class SocketService {
     });
 
     socket.on('stop_typing', ({ conversationId, messageId }: any) => {
+      recordSocketEvent('stop_typing');
       socket.to(`conversation:${conversationId}`).emit('user_stop_typing', {
         userId,
         conversationId,
@@ -89,6 +111,7 @@ export class SocketService {
     });
 
     socket.on('disconnect', async () => {
+      recordSocketEvent('disconnect');
       console.log(`User ${userId} disconnected from socket ${socket.id}`);
 
       const userSocketSet = this.userSockets.get(userId);
@@ -99,7 +122,7 @@ export class SocketService {
           
           // Update last active time in database
           try {
-            await prisma.user.update({
+            await prisma.users.update({
               where: { id: userId },
               data: { lastActive: new Date() },
             });
@@ -127,15 +150,43 @@ export class SocketService {
   }
 
   sendMessage(conversationId: string, message: any) {
+    recordSocketEvent('message');
     this.io.to(`conversation:${conversationId}`).emit('new_message', message);
   }
 
   sendNotification(userId: string, notification: any) {
+    recordSocketEvent('notification');
     this.io.to(`user:${userId}`).emit('notification', notification);
   }
 
   updateConversation(conversationId: string, update: any) {
+    recordSocketEvent('conversation_updated');
     this.io.to(`conversation:${conversationId}`).emit('conversation_updated', update);
+  }
+
+  // Broadcast a generic event to all connected clients
+  broadcast(event: string, payload: any) {
+    this.io.emit(event, payload);
+  }
+
+  // Emit a read receipt for a conversation
+  emitReadReceipt(conversationId: string, userId: string, lastReadAt: Date) {
+    recordSocketEvent('message_read');
+    this.io.to(`conversation:${conversationId}`).emit('message_read', {
+      conversationId,
+      userId,
+      lastReadAt: lastReadAt.toISOString(),
+    });
+  }
+
+  // Emit a delivered event for a new message
+  emitDelivered(conversationId: string, messageId: string, deliveredAt: Date) {
+    recordSocketEvent('message_delivered');
+    this.io.to(`conversation:${conversationId}`).emit('message_delivered', {
+      conversationId,
+      messageId,
+      deliveredAt: deliveredAt.toISOString(),
+    });
   }
 
   getOnlineUsers(): string[] {
@@ -154,7 +205,7 @@ export class SocketService {
     
     // For offline users, get lastSeen from the database
     try {
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { id: userId },
         select: { lastActive: true },
       });

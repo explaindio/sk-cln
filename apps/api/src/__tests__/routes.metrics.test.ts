@@ -1,7 +1,7 @@
 import request from 'supertest';
 import express from 'express';
 import app from '../index';
-import { resetMetrics } from '../lib/metrics';
+import { resetMetrics, recordSocketEvent } from '../lib/metrics';
 import zlib from 'zlib';
 
 describe('Prometheus metrics endpoint', () => {
@@ -82,6 +82,21 @@ describe('Prometheus metrics encodings', () => {
     expect(res.status).toBe(200);
     expect(String(res.headers['content-type'])).toContain('application/openmetrics-text');
     expect(res.text.trim().endsWith('# EOF')).toBe(true);
+  });
+});
+
+describe('Socket event metrics', () => {
+  beforeEach(() => resetMetrics());
+
+  it('renders socket_events_total by event type', async () => {
+    recordSocketEvent('connect');
+    recordSocketEvent('message');
+    recordSocketEvent('message');
+    const res = await request(app).get('/metrics');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('# HELP socket_events_total');
+    expect(res.text).toMatch(/socket_events_total\{event=\"connect\"\} \d+/);
+    expect(res.text).toMatch(/socket_events_total\{event=\"message\"\} 2/);
   });
 });
 
