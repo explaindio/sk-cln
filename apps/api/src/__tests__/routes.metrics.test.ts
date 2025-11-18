@@ -1,8 +1,12 @@
 import request from 'supertest';
 import express from 'express';
 import app from '../index';
+import { resetMetrics } from '../lib/metrics';
 
 describe('Prometheus metrics endpoint', () => {
+  beforeEach(() => {
+    resetMetrics();
+  });
   it('serves text format with standard headers', async () => {
     const res = await request(app).get('/metrics');
     expect(res.status).toBe(200);

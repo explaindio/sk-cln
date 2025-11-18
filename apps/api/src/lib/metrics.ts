@@ -9,6 +9,18 @@ let reqDurationCount = 0;
 const DURATION_BUCKETS = [50, 100, 250, 500, 1000, 2000, 5000];
 const bucketCounts: Map<number, number> = new Map(DURATION_BUCKETS.map((b) => [b, 0] as [number, number]));
 
+// Reset all in-memory metrics to support deterministic tests
+export function resetMetrics(): void {
+  requestCounters.clear();
+  routeCounters.clear();
+  reqDurationMsSum = 0;
+  reqDurationCount = 0;
+  // Clear histogram counts; renderPrometheus guards with `|| 0`
+  for (const b of DURATION_BUCKETS) {
+    bucketCounts.set(b, 0);
+  }
+}
+
 export function recordRequest(method: Method, status: Status, durationMs: number, route?: string) {
   const key = `${method}|${status}`;
   requestCounters.set(key, (requestCounters.get(key) || 0) + 1);
