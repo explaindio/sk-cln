@@ -1,0 +1,50 @@
+name: API Focused Tests (repo-local)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  api-focused:
+    name: API Focused (metrics + curated)
+    runs-on: ubuntu-latest
+    env:
+      TEST_QUIET: true
+      API_COVERAGE_STRICT: true
+      METRICS_ROUTE_ALLOWLIST: "/health,/metrics,/api/posts,/api/messages,/api/analytics,/api/notifications,/api/search,/api/communities,/api/courses,/api/users"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run curated API tests (metrics focus)
+        working-directory: apps/api
+        run: |
+          pnpm test -- \
+            src/__tests__/routes.metrics.test.ts \
+            src/__tests__/routes.metrics.ratelimit.test.ts \
+            --runInBand
+
+      - name: Upload API coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-coverage
+          path: apps/api/coverage
+        continue-on-error: true
+

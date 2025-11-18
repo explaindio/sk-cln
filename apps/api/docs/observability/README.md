@@ -30,6 +30,7 @@ Grafana Dashboard
   - Latency p50/p90/p99: `histogram_quantile(quantile, sum(rate(http_request_duration_ms_bucket[5m])) by (le))`
   - RPS: `sum(rate(http_request_duration_ms_count[1m]))`
   - Memory, Uptime, Build info: `process_resident_memory_bytes`, `process_uptime_seconds`, `build_info`
+  - Socket events (5m): `sum(increase(socket_events_total[5m])) by (event)`
 - Datasource variable: select your Prometheus as `DS_PROM` during import if prompted.
 
 Testing
@@ -38,4 +39,6 @@ Testing
 - Validations covered:
   - Prometheus format, histograms, build info
   - Route normalization (`:email`, `:slug`, `:id`) and `/other` bucketing
-
+  - Socket events exposure via `socket_events_total`
+  - Rate-limit smoke using test-only endpoint: `src/__tests__/routes.metrics.ratelimit.test.ts`
+    - Test-only route `/test/limited` exists only under `NODE_ENV=test` and is not mounted in production
