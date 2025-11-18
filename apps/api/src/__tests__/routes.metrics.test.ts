@@ -10,6 +10,7 @@ describe('Prometheus metrics endpoint', () => {
   });
   it('serves text format with standard headers', async () => {
     const res = await request(app).get('/metrics');
+    // no debug logging
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toContain('text/plain');
     expect(res.text).toContain('# HELP http_requests_total');
@@ -83,3 +84,6 @@ describe('Prometheus metrics encodings', () => {
     expect(res.text.trim().endsWith('# EOF')).toBe(true);
   });
 });
+
+// Note: rate-limit (429) visibility tests omitted here to avoid global
+// request counters being affected by other suites consuming limiter buckets.
